@@ -70,6 +70,7 @@ async fn main() -> Result<()> {
     //socket server setup
     let (io_layer, io) = SocketIo::new_layer();
 
+    //socket handlers simply subscribe and unsubscribe from topics
     io.ns("/data_schema", |s: SocketRef| {
         s.on("subscribe", |s: SocketRef, Data::<String>(msg)| {
             let join_result = s.join(Room::Owned(msg.clone()));
@@ -91,6 +92,7 @@ async fn main() -> Result<()> {
         });
     });
 
+    //create a thread that uses rabbit to listen and publish schemas
     let publisher_thread = tokio::spawn(rabbit_thread(
         channel,
         queue,
@@ -98,14 +100,17 @@ async fn main() -> Result<()> {
         io,
     ));
 
+    //build the tower layers
     let cors_layer = CorsLayer::new()
-        // allow requests from any origin
+        //testing - allow requests from any origin
         .allow_origin(Any);
     let app = axum::Router::new().layer(io_layer).layer(cors_layer);
 
+    //create the sucket server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     let app_thread = axum::serve(listener, app).into_future();
     
+    //wait for either thread to fail
     tokio::select! {
         Err(e) = publisher_thread => {
             error!("publisher thread failed {}", e);
@@ -120,11 +125,13 @@ async fn main() -> Result<()> {
 }
 
 async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: SocketIo) {
+    //set the prefetch on the channel
     channel
         .basic_qos(prefetch, BasicQosOptions::default())
         .await
         .expect("failed to set qos");
 
+    //create a message consumer
     let consumer = channel
         .basic_consume(
             queue.name().as_str(),
@@ -135,6 +142,7 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
         .await
         .expect("failed to consume");
 
+    //process messages async (neverending loop)
     consumer
         .map(|delivery| (delivery, io.clone()))
         .for_each_concurrent(None, move |t| async move {
@@ -148,8 +156,12 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
 
             for schema in schemas {
                 let topics = schema.get_topics();
-                let schema_string = serde_json::to_string(&schema).unwrap();
-                t.1.of("/data_schema").unwrap().to(topics).emit("data", schema_string).ok();
+                
+                t.1.of("/data_schema").unwrap().to(topics).emit("data", schema).ok();
+
+                //for testing, can publish as string to see in a tool like https://piehost.com/socketio-tester
+                // let schema_string = serde_json::to_string(&schema).unwrap();
+                //t.1.of("/data_schema").unwrap().to(topics).emit("data", schema_string).ok();
             }
             delivery
                 .ack(Default::default())
