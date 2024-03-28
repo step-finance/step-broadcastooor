@@ -5,7 +5,6 @@ use clap::Parser;
 use futures_util::StreamExt;
 use log::{debug, error, trace};
 use tower_http::cors::{Any, CorsLayer};
-use http::Method;
 
 use indexer_rabbitmq::lapin::{
     options::{BasicQosOptions, QueueDeclareOptions},
@@ -59,7 +58,7 @@ async fn main() -> Result<()> {
         .await?;
     channel
         .queue_bind(
-            &queue.name().as_str(),
+            queue.name().as_str(),
             &args.rabbitmq_exchange,
             "#",
             Default::default(),
@@ -96,7 +95,7 @@ async fn main() -> Result<()> {
     let publisher_thread = tokio::spawn(rabbit_thread(
         channel,
         queue,
-        args.rabbitmq_prefetch.unwrap_or(64 as u16),
+        args.rabbitmq_prefetch.unwrap_or(64_u16),
         io,
     ));
 
@@ -109,7 +108,7 @@ async fn main() -> Result<()> {
     //create the sucket server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     let app_thread = axum::serve(listener, app).into_future();
-    
+
     //wait for either thread to fail
     tokio::select! {
         Err(e) = publisher_thread => {
@@ -149,15 +148,28 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
             let delivery = t.0.expect("failed to get delivery");
             let data = delivery.data.as_slice();
 
-            trace!("got message: {:?}", String::from_utf8(data.to_vec()).unwrap());
+            trace!(
+                "got message: {:?}",
+                String::from_utf8(data.to_vec()).unwrap()
+            );
 
             let schemas: Vec<Schema> =
                 serde_json::from_slice(data).expect("failed to parse message");
 
             for schema in schemas {
                 let topics = schema.get_topics();
-                
-                t.1.of("/data_schema").unwrap().to(topics).emit("data", schema).ok();
+
+                debug!(
+                    "publishing schema {} to topics: {:?}",
+                    schema.get_schema_name(),
+                    topics
+                );
+
+                t.1.of("/data_schema")
+                    .unwrap()
+                    .to(topics)
+                    .emit("data", schema)
+                    .ok();
 
                 //for testing, can publish as string to see in a tool like https://piehost.com/socketio-tester
                 // let schema_string = serde_json::to_string(&schema).unwrap();

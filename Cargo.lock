@@ -267,7 +267,7 @@ dependencies = [
 [[package]]
 name = "anchor-gen"
 version = "0.4.0"
-source = "git+https://github.com/step-finance/anchor-gen.git?rev=8d74ff2ff439caef54650d1bb808137770f76b91#8d74ff2ff439caef54650d1bb808137770f76b91"
+source = "git+https://github.com/step-finance/anchor-gen.git?rev=fea78b5fad7d121457c1125ac2f2596319a17bf6#fea78b5fad7d121457c1125ac2f2596319a17bf6"
 dependencies = [
  "anchor-generate-cpi-crate",
 ]
@@ -275,7 +275,7 @@ dependencies = [
 [[package]]
 name = "anchor-generate-cpi-crate"
 version = "0.4.0"
-source = "git+https://github.com/step-finance/anchor-gen.git?rev=8d74ff2ff439caef54650d1bb808137770f76b91#8d74ff2ff439caef54650d1bb808137770f76b91"
+source = "git+https://github.com/step-finance/anchor-gen.git?rev=fea78b5fad7d121457c1125ac2f2596319a17bf6#fea78b5fad7d121457c1125ac2f2596319a17bf6"
 dependencies = [
  "anchor-idl",
  "anchor-lang",
@@ -285,7 +285,7 @@ dependencies = [
 [[package]]
 name = "anchor-idl"
 version = "0.4.0"
-source = "git+https://github.com/step-finance/anchor-gen.git?rev=8d74ff2ff439caef54650d1bb808137770f76b91#8d74ff2ff439caef54650d1bb808137770f76b91"
+source = "git+https://github.com/step-finance/anchor-gen.git?rev=fea78b5fad7d121457c1125ac2f2596319a17bf6#fea78b5fad7d121457c1125ac2f2596319a17bf6"
 dependencies = [
  "anchor-lang",
  "anchor-syn",
@@ -6203,6 +6203,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "step-ingestooor-derive"
+version = "0.0.1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.53",
+]
+
+[[package]]
 name = "step-ingestooor-engine"
 version = "0.0.1"
 dependencies = [
@@ -6270,6 +6279,7 @@ dependencies = [
  "rust_decimal",
  "serde_json",
  "slab_tree",
+ "solana-client",
  "solana-sdk",
  "solana-transaction-status",
  "spl-token",
@@ -6283,11 +6293,13 @@ name = "step-ingestooor-sdk"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "async-trait",
  "base64 0.21.7",
  "borsh 0.10.3",
  "bytes",
  "chrono",
  "enum_dispatch",
+ "holaplex-indexer-rabbitmq",
  "log",
  "postgres-types",
  "redis",
@@ -6302,6 +6314,7 @@ dependencies = [
  "solana-sdk",
  "solana-transaction-status",
  "spl-token",
+ "step-ingestooor-derive",
  "strum 0.26.2",
  "strum_macros 0.26.2",
  "tokio",
