@@ -5,7 +5,6 @@ use clap::Parser;
 use futures_util::StreamExt;
 use log::{debug, error, trace};
 use tower_http::cors::{Any, CorsLayer};
-use http::Method;
 
 use indexer_rabbitmq::lapin::{
     options::{BasicQosOptions, QueueDeclareOptions},
@@ -156,6 +155,8 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
 
             for schema in schemas {
                 let topics = schema.get_topics();
+
+                debug!("publishing schema {} to topics: {:?}", schema.get_schema_name(), topics);
                 
                 t.1.of("/data_schema").unwrap().to(topics).emit("data", schema).ok();
 
