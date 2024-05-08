@@ -1,6 +1,6 @@
 [package]
 name = "step-broadcastooor"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Dana <dana@step.finance>"]
 repository = "https://github.com/step-finance/step-broadcastooor"
 homepage = "https://step.finance/"

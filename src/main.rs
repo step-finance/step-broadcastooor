@@ -2,8 +2,8 @@ use std::future::IntoFuture;
 
 use anyhow::Result;
 use clap::Parser;
-use dashmap::{mapref::multiple::RefMulti, DashMap};
-use evalexpr::{build_operator_tree, ContextWithMutableVariables, HashMapContext, Node, Value};
+use dashmap::DashMap;
+use evalexpr::{build_operator_tree, Node};
 use futures_util::StreamExt;
 use log::{debug, error, trace, warn};
 use tower_http::cors::{Any, CorsLayer};
@@ -173,7 +173,7 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
 
             for schema in schemas {
                 let topics = schema.get_topics();
-                let mut context = schema.get_expr_context();
+                let context = schema.get_expr_context();
 
                 debug!(
                     "publishing schema {} to topics: {:?}",
@@ -193,13 +193,21 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                     //safe to unwrap, is always created in the subscribe handler
                     let all_filters = socket.extensions.get::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
 
+                    //REMOVE THIS
+                    // let mut context = evalexpr::HashMapContext::new();
+                    // evalexpr::ContextWithMutableVariables::set_value(&mut context, "asd".to_string(), evalexpr::Value::Int(100u64.try_into().or_else(|e|i64::MAX).unwrap()))
+                    //     .or_else(|e| {
+                    //         log::error!("Failed to set value for {} cause: {}", "asd", e);
+                    //         Ok(())
+                    //     }).ok();
+                    
                     //for each topic, look for filters and evaluate them
-                    for topic in topics {
-                        if let Some(room_filters) = all_filters.get(&topic) {
+                    for topic in topics.iter() {
+                        if let Some(room_filters) = all_filters.get(topic) {
                             for room_filter in room_filters.iter() {
                                 if let Some(filter) = room_filter.value() {
                                     match filter.eval_boolean_with_context(&context) {
-                                        Ok(Value::Boolean(true)) => {
+                                        Ok(true) => {
                                             let message = Message {
                                                 topic: topic.clone(),
                                                 filter_id: Some(room_filter.key().clone()),
@@ -207,12 +215,8 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                                             };
                                             socket.emit("message", message).ok();
                                         }
-                                        Ok(Value::Boolean(false)) => {
+                                        Ok(false) => {
                                             //do nothing
-                                        }
-                                        Ok(v) => {
-                                            error!("filter returned non-boolean value: {:?}", v);
-                                            socket.emit("error", "expression must evaluate to a boolean").ok();
                                         }
                                         Err(e) => {
                                             error!("filter evaluation failed: {}", e);
