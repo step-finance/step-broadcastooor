@@ -2,8 +2,10 @@ use std::future::IntoFuture;
 
 use anyhow::Result;
 use clap::Parser;
+use dashmap::{mapref::multiple::RefMulti, DashMap};
+use evalexpr::{build_operator_tree, ContextWithMutableVariables, HashMapContext, Node, Value};
 use futures_util::StreamExt;
-use log::{debug, error, trace};
+use log::{debug, error, trace, warn};
 use tower_http::cors::{Any, CorsLayer};
 
 use indexer_rabbitmq::lapin::{
@@ -32,6 +34,31 @@ pub struct BroadcastooorArgs {
     /// This loosely translates to # simultaneous messages being processed
     #[clap(long, env)]
     pub rabbitmq_prefetch: Option<u16>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct Filter {
+    id: String,
+    expression: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct SubscribeRequest {
+    topic: String,
+    filter: Option<Filter>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct UnsubscribeRequest {
+    topic: String,
+    filter_id: Option<String>,
+}
+
+#[derive(serde::Serialize)]
+pub struct Message {
+    topic: String,
+    filter_id: Option<String>,
+    schema: Schema,
 }
 
 #[tokio::main]
@@ -71,24 +98,12 @@ async fn main() -> Result<()> {
 
     //socket handlers simply subscribe and unsubscribe from topics
     io.ns("/data_schema", |s: SocketRef| {
-        s.on("subscribe", |s: SocketRef, Data::<String>(msg)| {
-            let join_result = s.join(Room::Owned(msg.clone()));
-            if join_result.is_err() {
-                error!("failed to join room {}", msg);
-                return;
-            }
-            debug!("subscribed to {}", msg);
-            s.emit("subscribed", msg).ok();
-        });
-        s.on("unsubscribe", |s: SocketRef, Data::<String>(msg)| {
-            let leave_result = s.leave(Room::Owned(msg.clone()));
-            if leave_result.is_err() {
-                error!("failed to leave room {}", msg);
-                return;
-            }
-            debug!("unsubscribed from {}", msg);
-            s.emit("unsubscribed", msg).ok();
-        });
+        //create the filter map on all sockets
+        let filters = DashMap::<String, Vec<(String, Option<Node>)>>::new();
+        s.extensions.insert(filters);
+        //create the handlers
+        s.on("subscribe", &handle_subscribe);
+        s.on("unsubscribe", &handle_unsubscribe);
     });
 
     //create a thread that uses rabbit to listen and publish schemas
@@ -158,6 +173,7 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
 
             for schema in schemas {
                 let topics = schema.get_topics();
+                let mut context = schema.get_expr_context();
 
                 debug!(
                     "publishing schema {} to topics: {:?}",
@@ -165,15 +181,57 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                     topics
                 );
 
-                t.1.of("/data_schema")
+                //because of expr evaluation, we need to manually loop the sockets
+                let sockets_for_eval = t.1.of("/data_schema")
                     .unwrap()
-                    .to(topics)
-                    .emit("data", schema)
-                    .ok();
+                    .to(topics.clone())
+                    .sockets().unwrap();
 
-                //for testing, can publish as string to see in a tool like https://piehost.com/socketio-tester
-                // let schema_string = serde_json::to_string(&schema).unwrap();
-                //t.1.of("/data_schema").unwrap().to(topics).emit("data", schema_string).ok();
+                //TODO short circuit this loop with a check to see if any socket has a filter on any of the topics
+                //     if not, we can just emit to all and move on
+                for socket in sockets_for_eval {
+                    //safe to unwrap, is always created in the subscribe handler
+                    let all_filters = socket.extensions.get::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
+
+                    //for each topic, look for filters and evaluate them
+                    for topic in topics {
+                        if let Some(room_filters) = all_filters.get(&topic) {
+                            for room_filter in room_filters.iter() {
+                                if let Some(filter) = room_filter.value() {
+                                    match filter.eval_boolean_with_context(&context) {
+                                        Ok(Value::Boolean(true)) => {
+                                            let message = Message {
+                                                topic: topic.clone(),
+                                                filter_id: Some(room_filter.key().clone()),
+                                                schema: schema.clone(),
+                                            };
+                                            socket.emit("message", message).ok();
+                                        }
+                                        Ok(Value::Boolean(false)) => {
+                                            //do nothing
+                                        }
+                                        Ok(v) => {
+                                            error!("filter returned non-boolean value: {:?}", v);
+                                            socket.emit("error", "expression must evaluate to a boolean").ok();
+                                        }
+                                        Err(e) => {
+                                            error!("filter evaluation failed: {}", e);
+                                            socket.emit("error", format!("filter evaluation failed: {}", e)).ok();
+                                        }
+                                    }
+                                } else {
+                                    //this is a full room subscription, send the schema to the client
+                                    let message = Message {
+                                        topic: topic.clone(),
+                                        filter_id: None,
+                                        schema: schema.clone(),
+                                    };
+                                    socket.emit("message", message).ok();
+                                }
+                            }
+                        }
+                    }
+                }
             }
             delivery
                 .ack(Default::default())
@@ -181,4 +239,73 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                 .expect("failed to ack");
         })
         .await;
+}
+
+fn handle_subscribe(s: SocketRef, msg: Data::<SubscribeRequest>) {
+    let Data(msg) = msg;
+    
+    //join the room for socketio
+    s.join(Room::Owned(msg.topic.clone())).ok();
+
+    //get a reference to filters on the socket
+    let all_filters = s.extensions.get_mut::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
+    //get the room filters or create a new one
+    let room_filters = all_filters.entry(msg.topic.clone()).or_insert_with(|| DashMap::<String, Option<Node>>::new());
+    
+    //add filter for the room
+    if let Some(filter) = msg.filter {
+        match build_operator_tree(&filter.expression) {
+            Ok(tree) => {
+                //insert the filter into the room filters
+                room_filters.value().insert(filter.id.clone(), Some(tree));
+            }
+            Err(e) => {
+                error!("failed to parse filter expression: {}", e);
+                s.emit("error", format!("subscribe error: {}", e)).ok();
+                return;
+            }
+        }
+        debug!("subscribed to {} with filter {} expr {}", msg.topic, filter.id, filter.expression);
+    } else {
+        //insert an empty placeholder to represent the room subscription, this is to make sure we don't unsubscribe from the room
+        //when we unsubscribe from the last filter if we also subscribed to the room
+        room_filters.value().insert(String::from(""), None);
+        debug!("subscribed to {}", msg.topic);
+    }
+
+    //notify the client that they have subscribed
+    s.emit("subscribed", msg.topic).ok();
+}
+
+fn handle_unsubscribe(s: SocketRef, msg: Data::<UnsubscribeRequest>) {
+    let Data(msg) = msg;
+
+    //get a reference to filters on the socket
+    let all_filters = s.extensions.get_mut::<DashMap<String, DashMap<String, Node>>>().unwrap();
+
+    //grab the room filters
+    if let Some(room_filters) = all_filters.get_mut(&msg.topic) {
+        //leave the filter for the room
+        if let Some(filter_id) = msg.filter_id {
+            if room_filters.remove(&filter_id).is_none() {
+                debug!("no filter found for {} with filter {}", msg.topic, filter_id);
+                return;
+            }
+            debug!("unsubscribed from {} with filter {}", msg.topic, filter_id);
+        } else {
+            room_filters.remove("");
+            debug!("unsubscribed from {}", msg.topic);
+        }
+        if room_filters.is_empty() {
+            //if there are no more filters for the room, leave the room and delete the room filters entry
+            s.leave(msg.topic.clone()).ok();
+            all_filters.remove(&msg.topic);
+        }
+    } else {
+        warn!("somehow no room filters for {}", msg.topic);
+        //register a leave, but not sure how in this state
+        s.leave(msg.topic.clone()).ok();
+    }
+    //notify the client that they have unsubscribed
+    s.emit("unsubscribed", msg.topic).ok();
 }
