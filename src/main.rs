@@ -5,7 +5,7 @@ use clap::Parser;
 use dashmap::DashMap;
 use evalexpr::{build_operator_tree, Node};
 use futures_util::StreamExt;
-use log::{debug, error, trace, warn};
+use log::{debug, error, info, trace, warn};
 use tower_http::cors::{Any, CorsLayer};
 
 use indexer_rabbitmq::lapin::{
@@ -99,7 +99,7 @@ async fn main() -> Result<()> {
     //socket handlers simply subscribe and unsubscribe from topics
     io.ns("/data_schema", |s: SocketRef| {
         //create the filter map on all sockets
-        let filters = DashMap::<String, Vec<(String, Option<Node>)>>::new();
+        let filters = DashMap::<String, DashMap<String, Option<Node>>>::new();
         s.extensions.insert(filters);
         //create the handlers
         s.on("subscribe", &handle_subscribe);
@@ -164,7 +164,7 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
             let data = delivery.data.as_slice();
 
             trace!(
-                "got message: {:?}",
+                "got message: {}",
                 String::from_utf8(data.to_vec()).unwrap()
             );
 
@@ -173,9 +173,8 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
 
             for schema in schemas {
                 let topics = schema.get_topics();
-                let context = schema.get_expr_context();
 
-                debug!(
+                trace!(
                     "publishing schema {} to topics: {:?}",
                     schema.get_schema_name(),
                     topics
@@ -188,7 +187,8 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                     .sockets().unwrap();
 
                 //TODO short circuit this loop with a check to see if any socket has a filter on any of the topics
-                //     if not, we can just emit to all and move on
+                //     if not, we can just emit to all and move ondebug_exchange
+                let context = schema.get_expr_context();
                 for socket in sockets_for_eval {
                     //safe to unwrap, is always created in the subscribe handler
                     let all_filters = socket.extensions.get::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
@@ -213,10 +213,15 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                                                 filter_id: Some(room_filter.key().clone()),
                                                 schema: schema.clone(),
                                             };
+
+                                            //debug
+                                            let message = serde_json::to_string(&message).expect("failed to serialize message");
+                                            
                                             socket.emit("message", message).ok();
                                         }
                                         Ok(false) => {
                                             //do nothing
+                                            debug!("filter {} evaluated to false", room_filter.key());
                                         }
                                         Err(e) => {
                                             error!("filter evaluation failed: {}", e);
@@ -230,6 +235,10 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                                         filter_id: None,
                                         schema: schema.clone(),
                                     };
+
+                                    //debug
+                                    let message = serde_json::to_string(&message).expect("failed to serialize message");
+                                    
                                     socket.emit("message", message).ok();
                                 }
                             }
@@ -245,8 +254,18 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
         .await;
 }
 
-fn handle_subscribe(s: SocketRef, msg: Data::<SubscribeRequest>) {
+fn handle_subscribe(s: SocketRef, msg: Data::<String>) {
     let Data(msg) = msg;
+    let msg = match serde_json::from_str::<SubscribeRequest>(&msg) {
+        Ok(msg) => msg,
+        Err(e) => {
+            error!("failed to parse subscribe request: {}", e);
+            s.emit("error", format!("subscribe error: {}", e)).ok();
+            return;
+        }
+    };
+
+    info!("received subscribe for {}", msg.topic);
     
     //join the room for socketio
     s.join(Room::Owned(msg.topic.clone())).ok();
@@ -281,11 +300,19 @@ fn handle_subscribe(s: SocketRef, msg: Data::<SubscribeRequest>) {
     s.emit("subscribed", msg.topic).ok();
 }
 
-fn handle_unsubscribe(s: SocketRef, msg: Data::<UnsubscribeRequest>) {
+fn handle_unsubscribe(s: SocketRef, msg: Data::<String>) {
     let Data(msg) = msg;
+    let msg = match serde_json::from_str::<UnsubscribeRequest>(&msg) {
+        Ok(msg) => msg,
+        Err(e) => {
+            error!("failed to parse unsubscribe request: {}", e);
+            s.emit("error", format!("unsubscribe error: {}", e)).ok();
+            return;
+        }
+    };
 
     //get a reference to filters on the socket
-    let all_filters = s.extensions.get_mut::<DashMap<String, DashMap<String, Node>>>().unwrap();
+    let all_filters = s.extensions.get_mut::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
 
     //grab the room filters
     if let Some(room_filters) = all_filters.get_mut(&msg.topic) {
