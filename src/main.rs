@@ -102,8 +102,8 @@ async fn main() -> Result<()> {
         let filters = DashMap::<String, DashMap<String, Option<Node>>>::new();
         s.extensions.insert(filters);
         //create the handlers
-        s.on("subscribe", &handle_subscribe);
-        s.on("unsubscribe", &handle_unsubscribe);
+        s.on("subscribe", handle_subscribe);
+        s.on("unsubscribe", handle_unsubscribe);
     });
 
     //create a thread that uses rabbit to listen and publish schemas
@@ -298,7 +298,7 @@ fn handle_subscribe(s: SocketRef, msg: Data<String>) {
     //get the room filters or create a new one
     let room_filters = all_filters
         .entry(msg.topic.clone())
-        .or_insert_with(|| DashMap::<String, Option<Node>>::new());
+        .or_insert_with(DashMap::<String, Option<Node>>::new);
 
     //add filter for the room
     if let Some(filter) = msg.filter {
