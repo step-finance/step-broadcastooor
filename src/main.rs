@@ -124,6 +124,8 @@ async fn main() -> Result<()> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     let app_thread = axum::serve(listener, app).into_future();
 
+    info!("started listening on all local IPs; port 3000");
+
     //wait for either thread to fail
     tokio::select! {
         Err(e) = publisher_thread => {
@@ -185,8 +187,16 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                     .unwrap()
                     .to(topics.clone())
                     .sockets().unwrap();
+                
+                let cnt = sockets_for_eval.len();
+                if cnt > 0 {
+                    debug!("got {} sockets for eval", cnt);
+                } else {
+                    //no sockets, no need to continue
+                    continue;
+                }
 
-                //TODO short circuit this loop with a check to see if any socket has a filter on any of the topics
+                //TODO maybe short circuit this loop with a check to see if any socket has a filter on any of the topics
                 //     if not, we can just emit to all and move ondebug_exchange
                 let context = schema.get_expr_context();
                 for socket in sockets_for_eval {
@@ -206,6 +216,7 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                         if let Some(room_filters) = all_filters.get(topic) {
                             for room_filter in room_filters.iter() {
                                 if let Some(filter) = room_filter.value() {
+                                    debug!("found room filter {}", filter.to_string());
                                     match filter.eval_boolean_with_context(&context) {
                                         Ok(true) => {
                                             let message = Message {
@@ -266,9 +277,6 @@ fn handle_subscribe(s: SocketRef, msg: Data::<String>) {
     };
 
     info!("received subscribe for {}", msg.topic);
-    
-    //join the room for socketio
-    s.join(Room::Owned(msg.topic.clone())).ok();
 
     //get a reference to filters on the socket
     let all_filters = s.extensions.get_mut::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
@@ -295,6 +303,8 @@ fn handle_subscribe(s: SocketRef, msg: Data::<String>) {
         room_filters.value().insert(String::from(""), None);
         debug!("subscribed to {}", msg.topic);
     }
+    //join the room for socketio
+    s.join(Room::Owned(msg.topic.clone())).ok();
 
     //notify the client that they have subscribed
     s.emit("subscribed", msg.topic).ok();
