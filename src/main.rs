@@ -19,6 +19,9 @@ use socketioxide::{
 };
 use step_ingestooor_engine::rabbit_factory;
 use step_ingestooor_sdk::schema::{Schema, SchemaTrait};
+use messages::{Message, SubscribeRequest, UnsubscribeRequest};
+
+mod messages;
 
 #[derive(Parser, PartialEq, Debug)]
 pub struct BroadcastooorArgs {
@@ -34,31 +37,6 @@ pub struct BroadcastooorArgs {
     /// This loosely translates to # simultaneous messages being processed
     #[clap(long, env)]
     pub rabbitmq_prefetch: Option<u16>,
-}
-
-#[derive(serde::Deserialize)]
-pub struct Filter {
-    id: String,
-    expression: String,
-}
-
-#[derive(serde::Deserialize)]
-pub struct SubscribeRequest {
-    topic: String,
-    filter: Option<Filter>,
-}
-
-#[derive(serde::Deserialize)]
-pub struct UnsubscribeRequest {
-    topic: String,
-    filter_id: Option<String>,
-}
-
-#[derive(serde::Serialize)]
-pub struct Message {
-    topic: String,
-    filter_id: Option<String>,
-    schema: Schema,
 }
 
 #[tokio::main]
@@ -254,8 +232,15 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
         .await;
 }
 
-fn handle_subscribe(s: SocketRef, msg: Data::<String>) {
-    let Data(msg) = msg;
+fn handle_subscribe(s: SocketRef, msg: Result<Data::<String>, serde_json::Error>) {
+    let msg = match msg {
+        Ok(Data::<String>(msg)) => msg,
+        Err(e) => {
+            error!("failed to parse subscribe request: {}", e);
+            s.emit("error", format!("subscribe error: {}", e)).ok();
+            return;
+        }
+    };
     let msg = match serde_json::from_str::<SubscribeRequest>(&msg) {
         Ok(msg) => msg,
         Err(e) => {
