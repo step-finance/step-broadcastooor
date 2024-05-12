@@ -80,8 +80,8 @@ async fn main() -> Result<()> {
         let filters = DashMap::<String, DashMap<String, Option<Node>>>::new();
         s.extensions.insert(filters);
         //create the handlers
-        s.on("subscribe", &handle_subscribe);
-        s.on("unsubscribe", &handle_unsubscribe);
+        s.on("subscribe", handle_subscribe);
+        s.on("unsubscribe", handle_unsubscribe);
     });
 
     //create a thread that uses rabbit to listen and publish schemas
@@ -101,6 +101,8 @@ async fn main() -> Result<()> {
     //create the sucket server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     let app_thread = axum::serve(listener, app).into_future();
+
+    info!("started listening on all local IPs; port 3000");
 
     //wait for either thread to fail
     tokio::select! {
@@ -141,10 +143,7 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
             let delivery = t.0.expect("failed to get delivery");
             let data = delivery.data.as_slice();
 
-            trace!(
-                "got message: {}",
-                String::from_utf8(data.to_vec()).unwrap()
-            );
+            trace!("got message: {}", String::from_utf8(data.to_vec()).unwrap());
 
             let schemas: Vec<Schema> =
                 serde_json::from_slice(data).expect("failed to parse message");
@@ -159,17 +158,30 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                 );
 
                 //because of expr evaluation, we need to manually loop the sockets
-                let sockets_for_eval = t.1.of("/data_schema")
-                    .unwrap()
-                    .to(topics.clone())
-                    .sockets().unwrap();
+                let sockets_for_eval =
+                    t.1.of("/data_schema")
+                        .unwrap()
+                        .to(topics.clone())
+                        .sockets()
+                        .unwrap();
 
-                //TODO short circuit this loop with a check to see if any socket has a filter on any of the topics
+                let cnt = sockets_for_eval.len();
+                if cnt > 0 {
+                    debug!("got {} sockets for eval", cnt);
+                } else {
+                    //no sockets, no need to continue
+                    continue;
+                }
+
+                //TODO maybe short circuit this loop with a check to see if any socket has a filter on any of the topics
                 //     if not, we can just emit to all and move ondebug_exchange
                 let context = schema.get_expr_context();
                 for socket in sockets_for_eval {
                     //safe to unwrap, is always created in the subscribe handler
-                    let all_filters = socket.extensions.get::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
+                    let all_filters = socket
+                        .extensions
+                        .get::<DashMap<String, DashMap<String, Option<Node>>>>()
+                        .unwrap();
 
                     //REMOVE THIS
                     // let mut context = evalexpr::HashMapContext::new();
@@ -178,12 +190,13 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                     //         log::error!("Failed to set value for {} cause: {}", "asd", e);
                     //         Ok(())
                     //     }).ok();
-                    
+
                     //for each topic, look for filters and evaluate them
                     for topic in topics.iter() {
                         if let Some(room_filters) = all_filters.get(topic) {
                             for room_filter in room_filters.iter() {
                                 if let Some(filter) = room_filter.value() {
+                                    debug!("found room filter {}", filter.to_string());
                                     match filter.eval_boolean_with_context(&context) {
                                         Ok(true) => {
                                             let message = Message {
@@ -193,17 +206,26 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                                             };
 
                                             //debug
-                                            let message = serde_json::to_string(&message).expect("failed to serialize message");
-                                            
+                                            let message = serde_json::to_string(&message)
+                                                .expect("failed to serialize message");
+
                                             socket.emit("message", message).ok();
                                         }
                                         Ok(false) => {
                                             //do nothing
-                                            debug!("filter {} evaluated to false", room_filter.key());
+                                            debug!(
+                                                "filter {} evaluated to false",
+                                                room_filter.key()
+                                            );
                                         }
                                         Err(e) => {
                                             error!("filter evaluation failed: {}", e);
-                                            socket.emit("error", format!("filter evaluation failed: {}", e)).ok();
+                                            socket
+                                                .emit(
+                                                    "error",
+                                                    format!("filter evaluation failed: {}", e),
+                                                )
+                                                .ok();
                                         }
                                     }
                                 } else {
@@ -215,8 +237,9 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
                                     };
 
                                     //debug
-                                    let message = serde_json::to_string(&message).expect("failed to serialize message");
-                                    
+                                    let message = serde_json::to_string(&message)
+                                        .expect("failed to serialize message");
+
                                     socket.emit("message", message).ok();
                                 }
                             }
@@ -251,15 +274,17 @@ fn handle_subscribe(s: SocketRef, msg: Result<Data::<String>, serde_json::Error>
     };
 
     info!("received subscribe for {}", msg.topic);
-    
-    //join the room for socketio
-    s.join(Room::Owned(msg.topic.clone())).ok();
 
     //get a reference to filters on the socket
-    let all_filters = s.extensions.get_mut::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
+    let all_filters = s
+        .extensions
+        .get_mut::<DashMap<String, DashMap<String, Option<Node>>>>()
+        .unwrap();
     //get the room filters or create a new one
-    let room_filters = all_filters.entry(msg.topic.clone()).or_insert_with(|| DashMap::<String, Option<Node>>::new());
-    
+    let room_filters = all_filters
+        .entry(msg.topic.clone())
+        .or_insert_with(DashMap::<String, Option<Node>>::new);
+
     //add filter for the room
     if let Some(filter) = msg.filter {
         match build_operator_tree(&filter.expression) {
@@ -273,19 +298,24 @@ fn handle_subscribe(s: SocketRef, msg: Result<Data::<String>, serde_json::Error>
                 return;
             }
         }
-        debug!("subscribed to {} with filter {} expr {}", msg.topic, filter.id, filter.expression);
+        debug!(
+            "subscribed to {} with filter {} expr {}",
+            msg.topic, filter.id, filter.expression
+        );
     } else {
         //insert an empty placeholder to represent the room subscription, this is to make sure we don't unsubscribe from the room
         //when we unsubscribe from the last filter if we also subscribed to the room
         room_filters.value().insert(String::from(""), None);
         debug!("subscribed to {}", msg.topic);
     }
+    //join the room for socketio
+    s.join(Room::Owned(msg.topic.clone())).ok();
 
     //notify the client that they have subscribed
     s.emit("subscribed", msg.topic).ok();
 }
 
-fn handle_unsubscribe(s: SocketRef, msg: Data::<String>) {
+fn handle_unsubscribe(s: SocketRef, msg: Data<String>) {
     let Data(msg) = msg;
     let msg = match serde_json::from_str::<UnsubscribeRequest>(&msg) {
         Ok(msg) => msg,
@@ -297,14 +327,20 @@ fn handle_unsubscribe(s: SocketRef, msg: Data::<String>) {
     };
 
     //get a reference to filters on the socket
-    let all_filters = s.extensions.get_mut::<DashMap<String, DashMap<String, Option<Node>>>>().unwrap();
+    let all_filters = s
+        .extensions
+        .get_mut::<DashMap<String, DashMap<String, Option<Node>>>>()
+        .unwrap();
 
     //grab the room filters
     if let Some(room_filters) = all_filters.get_mut(&msg.topic) {
         //leave the filter for the room
         if let Some(filter_id) = msg.filter_id {
             if room_filters.remove(&filter_id).is_none() {
-                debug!("no filter found for {} with filter {}", msg.topic, filter_id);
+                debug!(
+                    "no filter found for {} with filter {}",
+                    msg.topic, filter_id
+                );
                 return;
             }
             debug!("unsubscribed from {} with filter {}", msg.topic, filter_id);
