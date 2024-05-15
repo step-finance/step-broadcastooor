@@ -1,26 +1,28 @@
+use step_ingestooor_sdk::schema::Schema;
+
 
 
 #[derive(serde::Deserialize)]
 pub struct Filter {
-    id: String,
-    expression: String,
+    pub id: String,
+    pub expression: String,
 }
 
 #[derive(serde::Deserialize)]
 pub struct SubscribeRequest {
-    topic: String,
-    filter: Option<Filter>,
+    pub topic: String,
+    pub filter: Option<Filter>,
 }
 
 #[derive(serde::Deserialize)]
 pub struct UnsubscribeRequest {
-    topic: String,
-    filter_id: Option<String>,
+    pub topic: String,
+    pub filter_id: Option<String>,
 }
 
 #[derive(serde::Serialize)]
 pub struct Message {
-    topic: String,
-    filter_id: Option<String>,
-    schema: Schema,
+    pub topic: String,
+    pub filter_id: Option<String>,
+    pub schema: Schema,
 }

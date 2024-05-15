@@ -14,7 +14,7 @@ use indexer_rabbitmq::lapin::{
 };
 use socketioxide::{
     adapter::Room,
-    extract::{Data, SocketRef},
+    extract::{SocketRef, TryData},
     SocketIo,
 };
 use step_ingestooor_engine::rabbit_factory;
@@ -255,9 +255,10 @@ async fn rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: Socket
         .await;
 }
 
-fn handle_subscribe(s: SocketRef, msg: Result<Data::<String>, serde_json::Error>) {
+fn handle_subscribe(s: SocketRef, msg: TryData::<String>) {
+    let TryData::<String>(msg) = msg;
     let msg = match msg {
-        Ok(Data::<String>(msg)) => msg,
+        Ok(msg) => msg,
         Err(e) => {
             error!("failed to parse subscribe request: {}", e);
             s.emit("error", format!("subscribe error: {}", e)).ok();
@@ -315,8 +316,16 @@ fn handle_subscribe(s: SocketRef, msg: Result<Data::<String>, serde_json::Error>
     s.emit("subscribed", msg.topic).ok();
 }
 
-fn handle_unsubscribe(s: SocketRef, msg: Data<String>) {
-    let Data(msg) = msg;
+fn handle_unsubscribe(s: SocketRef, msg: TryData<String>) {
+    let TryData(msg) = msg;
+    let msg = match msg {
+        Ok(msg) => msg,
+        Err(e) => {
+            error!("failed to parse subscribe request: {}", e);
+            s.emit("error", format!("subscribe error: {}", e)).ok();
+            return;
+        }
+    };
     let msg = match serde_json::from_str::<UnsubscribeRequest>(&msg) {
         Ok(msg) => msg,
         Err(e) => {
