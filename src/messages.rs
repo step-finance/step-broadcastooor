@@ -1,7 +1,5 @@
 use step_ingestooor_sdk::schema::Schema;
 
-
-
 #[derive(serde::Deserialize)]
 pub struct Filter {
     pub id: String,
