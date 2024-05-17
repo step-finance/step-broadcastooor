@@ -1,26 +1,25 @@
 use step_ingestooor_sdk::schema::Schema;
+use serde::{Deserialize, Serialize};
 
-
-
-#[derive(serde::Deserialize)]
+#[derive(Deserialize)]
 pub struct Filter {
     pub id: String,
     pub expression: String,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Deserialize)]
 pub struct SubscribeRequest {
     pub topic: String,
     pub filter: Option<Filter>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Deserialize)]
 pub struct UnsubscribeRequest {
     pub topic: String,
     pub filter_id: Option<String>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 pub struct Message {
     pub topic: String,
     pub filter_id: Option<String>,
