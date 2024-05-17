@@ -1,5 +1,5 @@
-use step_ingestooor_sdk::schema::Schema;
 use serde::{Deserialize, Serialize};
+use step_ingestooor_sdk::schema::Schema;
 
 #[derive(Deserialize)]
 pub struct Filter {
