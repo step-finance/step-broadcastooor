@@ -1,8 +1,10 @@
 use dashmap::DashMap;
 use evalexpr::Node;
 use indexer_rabbitmq::lapin::{options::BasicQosOptions, Channel, Queue};
-use socketioxide::SocketIo;
+use log::{debug, error, trace};
+use socketioxide::{extract::SocketRef, SocketIo};
 use futures_util::StreamExt;
+use step_ingestooor_sdk::schema::{Schema, SchemaTrait};
 
 use crate::messages::Message;
 
