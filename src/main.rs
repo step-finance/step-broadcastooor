@@ -8,7 +8,7 @@ use log::{debug, error, info, warn};
 use tower_http::cors::{Any, CorsLayer};
 
 use indexer_rabbitmq::lapin::options::QueueDeclareOptions;
-use messages::{Message, SubscribeRequest, UnsubscribeRequest};
+use messages::{SubscribeRequest, UnsubscribeRequest};
 use socketioxide::{
     adapter::Room,
     extract::{SocketRef, TryData},
