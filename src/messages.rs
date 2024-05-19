@@ -20,8 +20,8 @@ pub struct UnsubscribeRequest {
 }
 
 #[derive(Serialize)]
-pub struct Message {
+pub struct Message<'a> {
     pub topic: String,
-    pub filter_id: Option<String>,
+    pub filter_id: Option<&'a String>,
     pub schema: Schema,
 }

@@ -79,7 +79,7 @@ async fn main() -> Result<()> {
     });
 
     //create a thread that uses rabbit to listen and publish schemas
-    let publisher_thread = tokio::spawn(receiver::create_rabbit_thread(
+    let publisher_thread = tokio::spawn(receiver::run_rabbit_thread(
         channel,
         queue,
         args.rabbitmq_prefetch.unwrap_or(64_u16),
