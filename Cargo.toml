@@ -34,10 +34,10 @@ tokio = { version = "1.35.1", features = [
     "sync",
 ] }
 
-#step-ingestooor-engine = { git = "https://github.com/step-finance/step-ingestooor", rev = "a2896f0601e2d118eba7859898af4bbb27887ea1" }
-#step-ingestooor-sdk = { git = "https://github.com/step-finance/step-ingestooor", rev = "a2896f0601e2d118eba7859898af4bbb27887ea1" }
-step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
-step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
+step-ingestooor-engine = { git = "https://github.com/step-finance/step-ingestooor", rev = "a2896f0601e2d118eba7859898af4bbb27887ea1" }
+step-ingestooor-sdk = { git = "https://github.com/step-finance/step-ingestooor", rev = "a2896f0601e2d118eba7859898af4bbb27887ea1" }
+#step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
+#step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
 
 indexer_rabbitmq = { package = "holaplex-indexer-rabbitmq", git = "https://github.com/step-finance/indexer-geyser-plugin", rev = "10fdb0ca1cc402ca614dba7cff7e06ef87768f62" }
 
