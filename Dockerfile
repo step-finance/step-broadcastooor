@@ -1,6 +1,8 @@
 FROM rust:1.76-slim-bullseye as build
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev git
+RUN apt-get update && apt-get install -y pkg-config libssl-dev git openssh-client
+
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 # Create a new empty shell project
 WORKDIR /
@@ -29,3 +31,4 @@ FROM debian:bullseye-slim
 RUN apt update && apt-get install -y ca-certificates
 COPY --from=build /app/target/release/step-broadcastooor .
 CMD ["./step-broadcastooor"]
+
