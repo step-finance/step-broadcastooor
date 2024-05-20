@@ -2250,6 +2250,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.21.0",
  "tower",
+ "tracing",
 ]
 
 [[package]]
@@ -2325,6 +2326,12 @@ dependencies = [
  "libc",
  "windows-sys 0.52.0",
 ]
+
+[[package]]
+name = "evalexpr"
+version = "11.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63b41cb9dd076076058a4523f009c900c582279536d0b2e45a29aa930e083cc5"
 
 [[package]]
 name = "event-listener"
@@ -2977,6 +2984,7 @@ dependencies = [
  "pin-project-lite",
  "smallvec",
  "tokio",
+ "want",
 ]
 
 [[package]]
@@ -2997,15 +3005,18 @@ dependencies = [
 
 [[package]]
 name = "hyper-tls"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6183ddfa99b85da61a140bea0efc93fdf56ceaa041b37d553518030827f9905"
+checksum = "70206fc6890eaca9fde8a0bf71caa2ddfc9fe045ac9e5c70df101a7dbde866e0"
 dependencies = [
  "bytes",
- "hyper 0.14.28",
+ "http-body-util",
+ "hyper 1.2.0",
+ "hyper-util",
  "native-tls",
  "tokio",
  "tokio-native-tls",
+ "tower-service",
 ]
 
 [[package]]
@@ -3015,6 +3026,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca38ef113da30126bbff9cd1705f9273e15d45498615d138b0c20279ac7a76aa"
 dependencies = [
  "bytes",
+ "futures-channel",
  "futures-util",
  "http 1.1.0",
  "http-body 1.0.0",
@@ -3022,6 +3034,9 @@ dependencies = [
  "pin-project-lite",
  "socket2 0.5.6",
  "tokio",
+ "tower",
+ "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -3514,6 +3529,21 @@ dependencies = [
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "mpl-token-metadata"
+version = "4.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caf0f61b553e424a6234af1268456972ee66c2222e1da89079242251fa7479e5"
+dependencies = [
+ "borsh 0.10.3",
+ "num-derive 0.3.3",
+ "num-traits",
+ "serde",
+ "serde_with 3.7.0",
+ "solana-program",
+ "thiserror",
 ]
 
 [[package]]
@@ -4550,24 +4580,21 @@ dependencies = [
  "http-body 0.4.6",
  "hyper 0.14.28",
  "hyper-rustls",
- "hyper-tls",
  "ipnet",
  "js-sys",
  "log",
  "mime",
- "native-tls",
  "once_cell",
  "percent-encoding",
  "pin-project-lite",
  "rustls",
- "rustls-pemfile",
+ "rustls-pemfile 1.0.4",
  "serde",
  "serde_json",
  "serde_urlencoded",
  "sync_wrapper",
  "system-configuration",
  "tokio",
- "tokio-native-tls",
  "tokio-rustls",
  "tokio-util",
  "tower-service",
@@ -4576,7 +4603,49 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "webpki-roots 0.25.4",
- "winreg",
+ "winreg 0.50.0",
+]
+
+[[package]]
+name = "reqwest"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "566cafdd92868e0939d3fb961bd0dc25fcfaaed179291093b3d43e6b3150ea10"
+dependencies = [
+ "base64 0.22.0",
+ "bytes",
+ "encoding_rs",
+ "futures-core",
+ "futures-util",
+ "h2 0.4.3",
+ "http 1.1.0",
+ "http-body 1.0.0",
+ "http-body-util",
+ "hyper 1.2.0",
+ "hyper-tls",
+ "hyper-util",
+ "ipnet",
+ "js-sys",
+ "log",
+ "mime",
+ "native-tls",
+ "once_cell",
+ "percent-encoding",
+ "pin-project-lite",
+ "rustls-pemfile 2.1.2",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sync_wrapper",
+ "system-configuration",
+ "tokio",
+ "tokio-native-tls",
+ "tower-service",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "winreg 0.52.0",
 ]
 
 [[package]]
@@ -4787,7 +4856,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9aace74cb666635c918e9c12bc0d348266037aa8eb599b5cba565709a8dff00"
 dependencies = [
  "openssl-probe",
- "rustls-pemfile",
+ "rustls-pemfile 1.0.4",
  "schannel",
  "security-framework",
 ]
@@ -4800,6 +4869,22 @@ checksum = "1c74cae0a4cf6ccbbf5f359f08efdf8ee7e1dc532573bf0db71968cb56b1448c"
 dependencies = [
  "base64 0.21.7",
 ]
+
+[[package]]
+name = "rustls-pemfile"
+version = "2.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29993a25686778eb88d4189742cd713c9bce943bc54251a33509dc63cbacf73d"
+dependencies = [
+ "base64 0.22.0",
+ "rustls-pki-types",
+]
+
+[[package]]
+name = "rustls-pki-types"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51f344d206c5e1b010eec27349b815a4805f70a778895959d70b74b9b529b30a"
 
 [[package]]
 name = "rustls-webpki"
@@ -5221,6 +5306,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tower",
+ "tracing",
 ]
 
 [[package]]
@@ -5409,7 +5495,7 @@ dependencies = [
  "gethostname",
  "lazy_static",
  "log",
- "reqwest",
+ "reqwest 0.11.27",
  "solana-sdk",
  "thiserror",
 ]
@@ -5551,7 +5637,7 @@ dependencies = [
  "crossbeam-channel",
  "futures-util",
  "log",
- "reqwest",
+ "reqwest 0.11.27",
  "semver",
  "serde",
  "serde_derive",
@@ -5631,7 +5717,7 @@ dependencies = [
  "bs58 0.4.0",
  "indicatif",
  "log",
- "reqwest",
+ "reqwest 0.11.27",
  "semver",
  "serde",
  "serde_derive",
@@ -5653,7 +5739,7 @@ dependencies = [
  "base64 0.21.7",
  "bs58 0.4.0",
  "jsonrpc-core",
- "reqwest",
+ "reqwest 0.11.27",
  "semver",
  "serde",
  "serde_derive",
@@ -6182,13 +6268,15 @@ dependencies = [
 
 [[package]]
 name = "step-broadcastooor"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "axum",
  "clap 3.2.25",
+ "dashmap 5.5.3",
  "dotenv",
  "env_logger 0.10.2",
+ "evalexpr",
  "futures-util",
  "holaplex-indexer-rabbitmq",
  "http 1.1.0",
@@ -6204,7 +6292,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-derive"
-version = "0.0.1"
+version = "0.0.2"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=30459924d32653f2525796456133dd2db74f8d3a#30459924d32653f2525796456133dd2db74f8d3a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6213,7 +6302,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-engine"
-version = "0.0.1"
+version = "0.0.2"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=30459924d32653f2525796456133dd2db74f8d3a#30459924d32653f2525796456133dd2db74f8d3a"
 dependencies = [
  "anyhow",
  "bincode",
@@ -6234,9 +6324,10 @@ dependencies = [
  "log",
  "metrics_cloudwatch",
  "postgres-types",
+ "rand 0.8.5",
  "redis",
  "regex",
- "reqwest",
+ "reqwest 0.12.4",
  "serde",
  "serde_json",
  "solana-client",
@@ -6256,7 +6347,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-idl-gens"
-version = "0.0.1"
+version = "0.0.2"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=30459924d32653f2525796456133dd2db74f8d3a#30459924d32653f2525796456133dd2db74f8d3a"
 dependencies = [
  "anchor-gen",
  "anchor-lang",
@@ -6265,7 +6357,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-parsers"
-version = "0.0.1"
+version = "0.0.2"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=30459924d32653f2525796456133dd2db74f8d3a#30459924d32653f2525796456133dd2db74f8d3a"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6275,8 +6368,11 @@ dependencies = [
  "chrono",
  "enum_dispatch",
  "log",
+ "mpl-token-metadata",
  "redis",
+ "reqwest 0.12.4",
  "rust_decimal",
+ "serde",
  "serde_json",
  "slab_tree",
  "solana-client",
@@ -6290,7 +6386,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-sdk"
-version = "0.0.1"
+version = "0.0.2"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=30459924d32653f2525796456133dd2db74f8d3a#30459924d32653f2525796456133dd2db74f8d3a"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6299,6 +6396,7 @@ dependencies = [
  "bytes",
  "chrono",
  "enum_dispatch",
+ "evalexpr",
  "holaplex-indexer-rabbitmq",
  "log",
  "postgres-types",
@@ -6492,7 +6590,7 @@ dependencies = [
  "cfg-if",
  "p12",
  "rustls-connector",
- "rustls-pemfile",
+ "rustls-pemfile 1.0.4",
 ]
 
 [[package]]
@@ -7449,6 +7547,16 @@ name = "winreg"
 version = "0.50.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "524e57b2c537c0f9b1e69f1965311ec12182b4122e45035b1508cd24d2adadb1"
+dependencies = [
+ "cfg-if",
+ "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "winreg"
+version = "0.52.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a277a57398d4bfa075df44f501a17cfdf8542d224f0d36095a2adc7aee4ef0a5"
 dependencies = [
  "cfg-if",
  "windows-sys 0.48.0",
