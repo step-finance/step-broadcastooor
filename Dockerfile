@@ -1,6 +1,6 @@
 FROM rust:1.76-slim-bullseye as build
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev
+RUN apt-get update && apt-get install -y pkg-config libssl-dev git
 
 # Create a new empty shell project
 WORKDIR /
@@ -8,6 +8,7 @@ RUN cargo new --bin app
 
 # Copy over the manifests
 WORKDIR /app
+COPY ./.cargo/config.toml ./.cargo/config.toml
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
 
@@ -22,7 +23,7 @@ RUN rm -r /app/target/release/temp
 COPY ./src /app/src
 
 # Build for release
-RUN CARGO_NET_GIT_FETCH_WITH_CLI=true && cargo build --release
+RUN --mount=type=ssh cargo build --release
 
 FROM debian:bullseye-slim
 RUN apt update && apt-get install -y ca-certificates

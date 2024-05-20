@@ -14,8 +14,6 @@ jobs:
   lint:
     docker:
       - image: rust:1.73
-    environment:
-      CARGO_NET_GIT_FETCH_WITH_CLI: true
     steps:
       - checkout
       - restore_cache:
@@ -40,8 +38,6 @@ jobs:
   test:
     docker:
       - image: rust:1.73
-    environment:
-      CARGO_NET_GIT_FETCH_WITH_CLI: true
     steps:
       - checkout
       - restore_cache:
@@ -61,8 +57,6 @@ jobs:
     docker:
       - image: rust:1.73
     resource_class: xlarge
-    environment:
-      CARGO_NET_GIT_FETCH_WITH_CLI: true
     steps:
       - checkout
       - restore_cache:
@@ -113,6 +107,7 @@ workflows:
           repo: step-broadcastooor
           region: eu-north-1
           tag: ${CIRCLE_BRANCH},${CIRCLE_BRANCH}-<< pipeline.number >>,${CIRCLE_BRANCH}-<< pipeline.number >>-${CIRCLE_SHA1}
+          extra-build-args: --ssl default
           context: aws-account
           filters:
             branches:
