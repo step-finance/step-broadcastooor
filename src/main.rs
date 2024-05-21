@@ -1,3 +1,22 @@
+//! The broadcastooor is a service that listens to a rabbitMQ exchange and broadcasts messages to clients via SocketIO.
+//!
+//! Requires environment variables or arguments as defined in the [BroadcastooorArgs] struct.
+//!
+//! The SocketIO path is `/data_schema` and supported messages are:
+//! - `subscribe`: Subscribe to a topic, payload should be [SubscribeRequest]
+//! - `unsubscribe`: Unsubscribe from a topic, payload should be [UnsubscribeRequest]
+//!
+//! Events that are emitted:
+//! - `schema`: A topic subscribed to emits a schema, payload is [SchemaMessage]
+//! - `subscribed`: Successfully subscribed to a topic, payload is the topic name
+//! - `unsubscribed`: Successfully unsubscribed from a topic, payload is the topic name
+//! - `error`: An error occurred, payload is a string describing the error
+//!
+//! The format for topics is `<schema_name>.<field name>.<field value>`. For instance,
+//! a `SolTransfer` schema with a `source` field of `123` would have a topic of `SolTransfer.source.123`.
+//! Some schemas are also published as general topics as just `<schema_name>`.
+//!
+//! For specific schemas, and their fields exposed as topics, see the [step_ingestooor_sdk::schema] module.
 use std::future::IntoFuture;
 
 use anyhow::Result;
@@ -13,10 +32,17 @@ use step_ingestooor_engine::rabbit_factory;
 
 use crate::handlers::{subscribe::handle_subscribe, unsubscribe::handle_unsubscribe};
 
+#[doc(inline)]
+pub use messages::*;
+
+#[doc(hidden)]
 mod handlers;
+#[doc(hidden)]
 mod messages;
+#[doc(hidden)]
 mod receiver;
 
+/// The arguments for the broadcastooor. These can be passed as arguments or environment variables.
 #[derive(Parser, PartialEq, Debug)]
 pub struct BroadcastooorArgs {
     /// The address of an AMQP server to connect to
@@ -33,6 +59,7 @@ pub struct BroadcastooorArgs {
     pub rabbitmq_prefetch: Option<u16>,
 }
 
+#[doc(hidden)]
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
