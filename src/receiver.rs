@@ -10,7 +10,7 @@ use socketioxide::{extract::SocketRef, socket::Socket, SocketIo};
 use step_ingestooor_sdk::schema::{Schema, SchemaTrait};
 use tokio::task;
 
-use crate::messages::Message;
+use crate::messages::SchemaMessage;
 
 pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: SocketIo) {
     //set the prefetch on the channel
@@ -112,13 +112,13 @@ fn handle_socket(
                 handle_filter(schema, topic, socket, filter_id, filter, context)
             } else {
                 //this is a full room subscription, send the schema to the client
-                let message = Message {
+                let message = SchemaMessage {
                     topic: topic.to_owned(),
                     filter_id: None,
                     schema: schema.clone(),
                 };
 
-                socket.emit("message", message).ok();
+                socket.emit("schema", message).ok();
             }
         }
     }
@@ -135,13 +135,13 @@ fn handle_filter(
     debug!("found room filter {}", filter.to_string());
     match filter.eval_boolean_with_context(context) {
         Ok(true) => {
-            let message = Message {
+            let message = SchemaMessage {
                 topic: topic.to_owned(),
                 filter_id: Some(filter_id),
                 schema: schema.clone(),
             };
 
-            socket.emit("message", message).ok();
+            socket.emit("schema", message).ok();
         }
         Ok(false) => {
             //do nothing
