@@ -34,8 +34,8 @@ tokio = { version = "1.35.1", features = [
     "sync",
 ] }
 
-step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "0817325e92573f1031e266c4b4c26023e5f43517" }
-step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "0817325e92573f1031e266c4b4c26023e5f43517" }
+step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "54cccb1b6633ad034dc66abc6546f03a56ebe113" }
+step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "54cccb1b6633ad034dc66abc6546f03a56ebe113" }
 #step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
 #step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
 

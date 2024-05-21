@@ -117,7 +117,11 @@ async fn main() -> Result<()> {
     let cors_layer = CorsLayer::new()
         //testing - allow requests from any origin
         .allow_origin(Any);
-    let app = axum::Router::new().layer(io_layer).layer(cors_layer);
+    let app = axum::Router::new()
+        //healthcheck for aws
+        .route("/healthcheck", axum::routing::get(|| async { "ok" }))
+        .layer(io_layer)
+        .layer(cors_layer);
 
     //create the sucket server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
