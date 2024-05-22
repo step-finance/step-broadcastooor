@@ -11,6 +11,7 @@ pub struct Filter {
     /// The schema's fields of types `i64`, `u64`, `f64`, `String`, and `bool` are available in
     /// the expression as their field names. Example: `price > 1000 && price < 2000`.
     /// `Option<T>` support could be added if needed (defaulting None to type default).
+    /// See [evalexpr] for more information on format, operators, etc. Regex is *not* enabled.
     pub expression: String,
 }
 

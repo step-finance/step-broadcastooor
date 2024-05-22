@@ -26,7 +26,7 @@ use evalexpr::Node;
 use log::{error, info};
 use tower_http::cors::{Any, CorsLayer};
 
-use indexer_rabbitmq::lapin::options::QueueDeclareOptions;
+use indexer_rabbitmq::lapin::{options::QueueDeclareOptions, types::FieldTable};
 use socketioxide::{extract::SocketRef, SocketIo};
 use step_ingestooor_engine::rabbit_factory;
 
@@ -70,6 +70,10 @@ async fn main() -> Result<()> {
     //rabbit setup
     let connection = rabbit_factory::amqp_connect(args.rabbitmq_url, "broadcastooor").await?;
     let channel = connection.create_channel().await?;
+    //create the temp queue with a max backlog of 10k.
+    //if we can't keep up, theres a problem, but we don't want to just pile on rabbit
+    let mut arguments = FieldTable::default();
+    arguments.insert("max-length".into(), 10_000.into());
     let queue = channel
         .queue_declare(
             "",
@@ -79,7 +83,7 @@ async fn main() -> Result<()> {
                 exclusive: true,
                 ..Default::default()
             },
-            Default::default(),
+            arguments,
         )
         .await?;
     channel
@@ -120,7 +124,9 @@ async fn main() -> Result<()> {
     let app = axum::Router::new()
         //healthcheck for aws
         .route("/healthcheck", axum::routing::get(|| async { "ok" }))
+        //socketio
         .layer(io_layer)
+        //cors
         .layer(cors_layer);
 
     //create the sucket server
