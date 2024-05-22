@@ -11,7 +11,6 @@ pub struct Filter {
     /// The schema's fields of types `i64`, `u64`, `f64`, `String`, and `bool` are available in
     /// the expression as their field names. Example: `price > 1000 && price < 2000`.
     /// `Option<T>` support could be added if needed (defaulting None to type default).
-    /// See [evalexpr] for more information on format, operators, etc. Regex is *not* enabled.
     pub expression: String,
 }
 
@@ -24,7 +23,7 @@ pub struct SubscribeRequest {
     pub filter: Option<Filter>,
 }
 
-/// A message to unsubscrbie from a topic, and optionally a specific filter.
+/// A message to unsubscribe from a topic, and optionally a specific filter.
 /// There is no way to wildcard unsubscribe from all filters on a topic.
 #[derive(Deserialize)]
 pub struct UnsubscribeRequest {

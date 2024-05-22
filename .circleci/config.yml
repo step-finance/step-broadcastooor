@@ -138,7 +138,7 @@ workflows:
 
       # Pre update (no hold required)
       - aws-ecs/deploy-service-update:
-          cluster: "pre-services-cluster"
+          cluster: "pre-api-cluster"
           family: "pre-broadcastooor"
           service-name: "pre-broadcastooor-service"
           container-env-var-updates: container=pre-broadcastooor-container,name=STEP_VERSION,value=${CIRCLE_BRANCH}-<< pipeline.number >>-${CIRCLE_SHA1}
@@ -163,7 +163,7 @@ workflows:
               only:
                 - main
       - aws-ecs/deploy-service-update:
-          cluster: "live-services-cluster"
+          cluster: "live-api-cluster"
           family: "live-broadcastooor"
           service-name: "live-broadcastooor-service"
           container-env-var-updates: container=live-broadcastooor-container,name=STEP_VERSION,value=${CIRCLE_BRANCH}-<< pipeline.number >>-${CIRCLE_SHA1}

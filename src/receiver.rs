@@ -25,7 +25,7 @@ pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io
             queue.name().as_str(),
             "broadcastooor",
             BasicConsumeOptions {
-                no_ack: false,
+                no_ack: true,
                 exclusive: true,
                 nowait: true,
                 ..Default::default()
