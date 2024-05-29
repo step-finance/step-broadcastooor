@@ -42,6 +42,13 @@ mod messages;
 #[doc(hidden)]
 mod receiver;
 
+/// The path to the socket.io namespace that handles schema subscriptions
+const SCHEMA_SOCKETIO_PATH: &str = "/data_schema";
+/// the path for a healthcheck endpoint
+const HEATHCHECK_PATH: &str = "/healthcheck";
+/// The address and port to bind the socket server to
+const BIND_ADDR_PORT: &str = "0.0.0.0:3000";
+
 /// The arguments for the broadcastooor. These can be passed as arguments or environment variables.
 #[derive(Parser, PartialEq, Debug)]
 pub struct BroadcastooorArgs {
@@ -100,7 +107,7 @@ async fn main() -> Result<()> {
     let (io_layer, io) = SocketIo::new_layer();
 
     //socket handlers simply subscribe and unsubscribe from topics
-    io.ns("/data_schema", |s: SocketRef| {
+    io.ns(SCHEMA_SOCKETIO_PATH, |s: SocketRef| {
         //create the filter map on all sockets
         let filters = DashMap::<String, DashMap<String, Option<Node>>>::new();
         s.extensions.insert(filters);
@@ -123,17 +130,17 @@ async fn main() -> Result<()> {
         .allow_origin(Any);
     let app = axum::Router::new()
         //healthcheck for aws
-        .route("/healthcheck", axum::routing::get(|| async { "ok" }))
+        .route(HEATHCHECK_PATH, axum::routing::get(|| async { "ok" }))
         //socketio
         .layer(io_layer)
         //cors
         .layer(cors_layer);
 
-    //create the sucket server
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    //create the socket server
+    let listener = tokio::net::TcpListener::bind(BIND_ADDR_PORT).await.unwrap();
     let app_thread = axum::serve(listener, app).into_future();
 
-    info!("started listening on all local IPs; port 3000");
+    info!("started listening on {}", BIND_ADDR_PORT);
 
     //wait for either thread to fail
     tokio::select! {
