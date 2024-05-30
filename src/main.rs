@@ -43,11 +43,11 @@ mod messages;
 mod receiver;
 
 /// The path to the socket.io namespace that handles schema subscriptions
-const SCHEMA_SOCKETIO_PATH: &str = "/data_schema";
+pub const SCHEMA_SOCKETIO_PATH: &str = "/data_schema";
 /// the path for a healthcheck endpoint
-const HEATHCHECK_PATH: &str = "/healthcheck";
+pub const HEATHCHECK_PATH: &str = "/healthcheck";
 /// The address and port to bind the socket server to
-const BIND_ADDR_PORT: &str = "0.0.0.0:3000";
+pub const BIND_ADDR_PORT: &str = "0.0.0.0:3000";
 
 /// The arguments for the broadcastooor. These can be passed as arguments or environment variables.
 #[derive(Parser, PartialEq, Debug)]

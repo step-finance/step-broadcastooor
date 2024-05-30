@@ -8,26 +8,18 @@ use socketioxide::{
 
 use crate::messages::SubscribeRequest;
 
-pub fn handle_subscribe(s: SocketRef, msg: TryData<String>) {
-    let TryData::<String>(msg) = msg;
-    let msg = match msg {
-        Ok(msg) => msg,
-        Err(e) => {
-            error!("failed to parse subscribe request: {}", e);
-            s.emit("error", format!("subscribe error: {}", e)).ok();
-            return;
-        }
-    };
-    let msg = match serde_json::from_str::<SubscribeRequest>(&msg) {
-        Ok(msg) => msg,
-        Err(e) => {
-            error!("failed to parse subscribe request: {}", e);
-            s.emit("error", format!("subscribe error: {}", e)).ok();
+pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
+    debug!("received subscribe request with data: {:?}", msg.0);
+    let msg: SubscribeRequest = match msg {
+        TryData(Ok(msg)) => msg,
+        TryData(Err(e)) => {
+            error!("Failed to parse subscribe request into SubscribeRequest: {}", e);
+            s.emit("serverError", format!("Failed to parse subscribe request into SubscribeRequest: {}", e)).ok();
             return;
         }
     };
 
-    info!("received subscribe for {}", msg.topic);
+    info!("received subscribe for {} with filter {:?}", msg.topic, msg.filter);
 
     //get a reference to filters on the socket
     let all_filters = s
@@ -48,7 +40,7 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<String>) {
             }
             Err(e) => {
                 error!("failed to parse filter expression: {}", e);
-                s.emit("error", format!("subscribe error: {}", e)).ok();
+                s.emit("serverError", format!("subscribe error: {}", e)).ok();
                 return;
             }
         }

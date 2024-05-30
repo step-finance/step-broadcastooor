@@ -10,7 +10,9 @@ use socketioxide::{extract::SocketRef, socket::Socket, SocketIo};
 use step_ingestooor_sdk::schema::{Schema, SchemaTrait};
 use tokio::task;
 
-use crate::messages::SchemaMessage;
+use crate::{messages::SchemaMessage, SCHEMA_SOCKETIO_PATH};
+
+pub const RECV_SCHEMA_EVENT_NAME: &str = "receivedSchema";
 
 pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: SocketIo) {
     //set the prefetch on the channel
@@ -64,7 +66,7 @@ fn handle_incoming_schemas(data: Vec<u8>, socket_io: SocketIo) {
 
         for topic in topics.iter() {
             let sockets_for_eval = socket_io
-                .of("/data_schema")
+                .of(SCHEMA_SOCKETIO_PATH)
                 .unwrap()
                 .to(topic.clone())
                 .sockets()
@@ -118,7 +120,7 @@ fn handle_socket(
                     schema: schema.clone(),
                 };
 
-                socket.emit("schema", message).ok();
+                socket.emit(RECV_SCHEMA_EVENT_NAME, message).ok();
             }
         }
     }
