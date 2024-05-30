@@ -33,9 +33,7 @@ tokio = { version = "1.35.1", features = [
     "signal",
     "sync",
 ] }
-typescript-type-def = { version = "0.5.11", features = [
-    "json_value",
-] }
+ts-rs = { version = "8.1", features = ["chrono-impl"] }
 
 # step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "a3e7e01297ec27cd2983eedf352c1920f37e07e7" }
 # step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "a3e7e01297ec27cd2983eedf352c1920f37e07e7" }

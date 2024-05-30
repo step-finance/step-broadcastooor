@@ -1,2 +1,5 @@
 [net]
 git-fetch-with-cli = true
+
+[env]
+TS_RS_EXPORT_DIR = { value = "sdk/src/types", relative = true }

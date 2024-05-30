@@ -1,3 +1,7 @@
 /target
 .env
 .idea
+/sdk/dist
+/sdk/node_modules
+/sdk/src/types/**
+!/sdk/src/types/index.ts
