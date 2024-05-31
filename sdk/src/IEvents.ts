@@ -2,9 +2,9 @@ import { SchemaMessage, SubscribeRequest } from "./types";
 
 export interface DataSchemaListenEvents {
   subscribed: (topic: string) => void;
-  unSubscribed: (topic: string) => void;
-  serverError: (message: string) => void;
-  receivedSchema: (schema: SchemaMessage) => void;
+  unsubscribed: (topic: string) => void;
+  serverError: (error: string) => void;
+  receivedSchema: (message: SchemaMessage) => void;
 }
 
 export interface DataSchemaEmitEvents {
