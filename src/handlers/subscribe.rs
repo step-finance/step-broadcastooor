@@ -14,13 +14,26 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
     let msg: SubscribeRequest = match msg {
         TryData(Ok(msg)) => msg,
         TryData(Err(e)) => {
-            error!("Failed to parse subscribe request into SubscribeRequest: {}", e);
-            s.emit("serverError", format!("Failed to parse subscribe request into SubscribeRequest: {}", e)).ok();
+            error!(
+                "Failed to parse subscribe request into SubscribeRequest: {}",
+                e
+            );
+            s.emit(
+                "serverError",
+                format!(
+                    "Failed to parse subscribe request into SubscribeRequest: {}",
+                    e
+                ),
+            )
+            .ok();
             return;
         }
     };
 
-    info!("received subscribe for {} with filter {:?}", msg.topic, msg.filter);
+    info!(
+        "received subscribe for {} with filter {:?}",
+        msg.topic, msg.filter
+    );
 
     //get a reference to filters on the socket
     let all_filters = s
@@ -41,7 +54,8 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
             }
             Err(e) => {
                 error!("failed to parse filter expression: {}", e);
-                s.emit("serverError", format!("subscribe error: {}", e)).ok();
+                s.emit("serverError", format!("subscribe error: {}", e))
+                    .ok();
                 return;
             }
         }

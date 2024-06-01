@@ -10,8 +10,18 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
     let msg: UnsubscribeRequest = match msg {
         TryData(Ok(msg)) => msg,
         TryData(Err(e)) => {
-            error!("Failed to parse unsubscribe request into UnsubscribeRequest: {}", e);
-            s.emit("serverError", format!("Failed to parse unsubscribe request into UnsubscribeRequest: {}", e)).ok();
+            error!(
+                "Failed to parse unsubscribe request into UnsubscribeRequest: {}",
+                e
+            );
+            s.emit(
+                "serverError",
+                format!(
+                    "Failed to parse unsubscribe request into UnsubscribeRequest: {}",
+                    e
+                ),
+            )
+            .ok();
             return;
         }
     };
@@ -40,7 +50,8 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
         } else {
             if room_filters.remove("").is_none() {
                 debug!("generic room filter not found for {}", msg.topic);
-                s.emit("serverError", "not subscribed genericly to that topic").ok();
+                s.emit("serverError", "not subscribed genericly to that topic")
+                    .ok();
                 return;
             }
             debug!("unsubscribed from {}", msg.topic);
