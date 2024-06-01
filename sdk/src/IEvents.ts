@@ -1,4 +1,4 @@
-import { SchemaMessage, SubscribeRequest } from "./types";
+import { SchemaMessage, SubscribeRequest, UnsubscribeRequest } from "./types";
 
 export interface DataSchemaListenEvents {
   subscribed: (topic: string) => void;
@@ -9,5 +9,5 @@ export interface DataSchemaListenEvents {
 
 export interface DataSchemaEmitEvents {
   subscribe: (req: SubscribeRequest) => void;
-  unsubscribe: () => void;
+  unsubscribe: (req: UnsubscribeRequest) => void;
 }

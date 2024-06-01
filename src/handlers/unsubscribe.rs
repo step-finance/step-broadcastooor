@@ -67,5 +67,5 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
         s.leave(msg.topic.clone()).ok();
     }
     //notify the client that they have unsubscribed
-    s.emit("unsubscribed", msg.topic).ok();
+    s.emit("unsubscribed", msg.topic).unwrap();
 }
