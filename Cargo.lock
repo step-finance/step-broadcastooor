@@ -6281,6 +6281,7 @@ dependencies = [
  "holaplex-indexer-rabbitmq",
  "http 1.1.0",
  "log",
+ "metrics_cloudwatch",
  "serde",
  "serde_json",
  "socketioxide",

@@ -5,6 +5,7 @@ use socketioxide::{
     adapter::Room,
     extract::{SocketRef, TryData},
 };
+use metrics_cloudwatch::metrics;
 
 use crate::messages::SubscribeRequest;
 
@@ -58,5 +59,22 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
     s.join(Room::Owned(msg.topic.clone())).ok();
 
     //notify the client that they have subscribed
-    s.emit("subscribed", msg.topic).ok();
+    s.emit("subscribed", msg.topic.clone()).ok();
+
+    //metrics
+    {
+        let mut topic_parts = msg.topic.split('.');
+        let schema_name = topic_parts.next().unwrap_or_default().to_string();
+        let field_name = topic_parts.next().unwrap_or_default().to_string();
+        // let labels = [("Schema", schema_name), ("Field", field_name)];
+        // metrics::increment_gauge!("TotalSubscriptions", 1.0, &labels);
+        metrics::increment_gauge!("CurrentSubscriptions", 1.0,
+            "Schema" => schema_name.clone(),
+            "Field" => field_name.clone(),
+        );
+        metrics::increment_counter!("TotalSubscriptions",
+            "Schema" => schema_name,
+            "Field" => field_name,
+        );
+    }
 }

@@ -25,9 +25,10 @@ use dashmap::DashMap;
 use evalexpr::Node;
 use log::{error, info};
 use tower_http::cors::{Any, CorsLayer};
+use metrics_cloudwatch::metrics;
+use socketioxide::{extract::SocketRef, SocketIo};
 
 use indexer_rabbitmq::lapin::{options::QueueDeclareOptions, types::FieldTable};
-use socketioxide::{extract::SocketRef, SocketIo};
 use step_ingestooor_engine::rabbit_factory;
 
 use crate::handlers::{subscribe::handle_subscribe, unsubscribe::handle_unsubscribe};
@@ -108,10 +109,17 @@ async fn main() -> Result<()> {
 
     //socket handlers simply subscribe and unsubscribe from topics
     io.ns(SCHEMA_SOCKETIO_PATH, |s: SocketRef| {
+        metrics::increment_counter!("TotalConnections");
+        metrics::increment_gauge!("CurrentConnections", 1.0);
+        info!("Client connected");
         //create the filter map on all sockets
         let filters = DashMap::<String, DashMap<String, Option<Node>>>::new();
         s.extensions.insert(filters);
         //create the handlers
+        s.on_disconnect(||{
+            metrics::decrement_gauge!("CurrentConnections", 1.0);
+            info!("Client disconnected");
+        });
         s.on("subscribe", handle_subscribe);
         s.on("unsubscribe", handle_unsubscribe);
     });
