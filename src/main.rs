@@ -73,6 +73,11 @@ async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
 
+    //setup metrics
+    if let Err(e) = step_common_rust::init_metrics("Broadcastooor").await {
+        log::error!("Error initializing metrics: {}", e);
+    }
+
     let args = BroadcastooorArgs::parse();
 
     //rabbit setup
