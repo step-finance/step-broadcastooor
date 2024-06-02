@@ -6285,11 +6285,29 @@ dependencies = [
  "serde",
  "serde_json",
  "socketioxide",
+ "step-common-rust",
  "step-ingestooor-engine",
  "step-ingestooor-sdk",
  "tokio",
  "tower-http",
  "ts-rs",
+]
+
+[[package]]
+name = "step-common-rust"
+version = "0.1.0"
+source = "git+ssh://git@github.com/step-finance/step-common-rust?tag=0.1.0#e442d285c75f2efd84e8b8204242809b8f114661"
+dependencies = [
+ "anyhow",
+ "env_logger 0.10.2",
+ "futures",
+ "futures-util",
+ "hostname",
+ "log",
+ "metrics_cloudwatch",
+ "reqwest 0.12.4",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

@@ -1,8 +1,7 @@
-import { io, Socket, Manager } from "socket.io-client";
+import { Socket, Manager } from "socket.io-client";
 import { DataSchemaEmitEvents, DataSchemaListenEvents } from "./IEvents";
-import { Filter, SchemaMessage } from "./types";
+import { SchemaMessage } from "./types/SchemaMessage";
 
-export * from "./types";
 export * from "./IEvents";
 
 export type SocketIOClient = Socket<DataSchemaListenEvents, DataSchemaEmitEvents>;
@@ -15,11 +14,22 @@ export class StepDataSchemaBroadcastooor {
     this.socket = this.manager.socket("/data_schema");
   }
 
+  onConnect(listener: () => void | Promise<void>) {
+    this.socket.on("connect", listener);
+  }
+
+  onDisconnect(listener: () => void | Promise<void>) {
+    this.socket.on("disconnect", listener);
+  }
+
   subscribe(topic: string, filterId?: string, filterExpression?: string) {
     if (!!filterId !== !!filterExpression) {
       throw new Error("filterId and filterExpression must both be set or both be undefined");
+    } else if (filterId && filterExpression) {
+      this.socket.emit("subscribe", { topic, "filter": { "id": filterId, "expression": filterExpression } });
+    } else {
+      this.socket.emit("subscribe", { topic });
     }
-    this.socket.emit("subscribe", { topic, "filter": { "id": filterId, "expression": exp } });
   }
   
   unsubscribe(topic: string, filterId?: string) {

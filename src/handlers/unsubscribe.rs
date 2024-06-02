@@ -14,14 +14,16 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
                 "Failed to parse unsubscribe request into UnsubscribeRequest: {}",
                 e
             );
-            s.emit(
-                "serverError",
-                format!(
-                    "Failed to parse unsubscribe request into UnsubscribeRequest: {}",
-                    e
-                ),
-            )
-            .ok();
+            if let Err(e) =
+                s.emit(
+                    "serverError",
+                    format!(
+                        "Failed to parse unsubscribe request into UnsubscribeRequest: {}",
+                        e
+                    ),
+                ) {
+                    error!("failed to emit serverError: {}", e);
+                }
             return;
         }
     };
@@ -43,32 +45,41 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
                     "no filter found for {} with filter {}",
                     msg.topic, filter_id
                 );
-                s.emit("serverError", "filter not found").ok();
+                if let Err(e) = s.emit("serverError", "filter not found") {
+                    error!("failed to emit serverError: {}", e);
+                }
                 return;
             }
             debug!("unsubscribed from {} filter {}", msg.topic, filter_id);
         } else {
             if room_filters.remove("").is_none() {
                 debug!("generic room filter not found for {}", msg.topic);
-                s.emit("serverError", "not subscribed genericly to that topic")
-                    .ok();
+                if let Err(e) = s.emit("serverError", "not subscribed genericly to that topic") {
+                    error!("failed to emit serverError: {}", e);
+                }
                 return;
             }
             debug!("unsubscribed from {}", msg.topic);
         }
         if room_filters.is_empty() {
             //if there are no more filters for the room, leave the room and delete the room filters entry
-            s.leave(msg.topic.clone()).ok();
+            if let Err(e) = s.leave(msg.topic.clone()) {
+                error!("failed to leave room: {}", e);
+            }
             all_filters.remove(&msg.topic);
         }
     } else {
         //client isn't subscribed to the room
         warn!("no room filters for {}", msg.topic);
         //register a leave just in case, but not sure how in this state
-        s.leave(msg.topic.clone()).ok();
+        if let Err(e) = s.leave(msg.topic.clone()) {
+            error!("failed to leave room (wasnt subscribed anyhow?): {}", e);
+        }
     }
     //notify the client that they have unsubscribed
-    s.emit("unsubscribed", msg.topic.clone()).ok();
+    if let Err(e) = s.emit("unsubscribed", msg.topic.clone()) {
+        error!("failed to emit unsubscribed: {}", e);
+    }
 
     //metrics
     {

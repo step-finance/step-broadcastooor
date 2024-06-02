@@ -18,14 +18,15 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
                 "Failed to parse subscribe request into SubscribeRequest: {}",
                 e
             );
-            s.emit(
+            if let Err(e) = s.emit(
                 "serverError",
                 format!(
                     "Failed to parse subscribe request into SubscribeRequest: {}",
                     e
                 ),
-            )
-            .ok();
+            ) {
+                error!("failed to emit serverError: {}", e);
+            }
             return;
         }
     };
@@ -54,8 +55,9 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
             }
             Err(e) => {
                 error!("failed to parse filter expression: {}", e);
-                s.emit("serverError", format!("subscribe error: {}", e))
-                    .ok();
+                if let Err(e) = s.emit("serverError", format!("subscribe error: {}", e)) {
+                    error!("failed to emit serverError: {}", e);
+                }
                 return;
             }
         }
@@ -70,10 +72,14 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
         debug!("subscribed to {}", msg.topic);
     }
     //join the room for socketio
-    s.join(Room::Owned(msg.topic.clone())).ok();
+    if let Err(e) = s.join(Room::Owned(msg.topic.clone())) {
+        error!("failed to join room: {}", e);
+    }
 
     //notify the client that they have subscribed
-    s.emit("subscribed", msg.topic.clone()).ok();
+    if let Err(e) = s.emit("subscribed", msg.topic.clone()) {
+        error!("failed to emit subscribed: {}", e);
+    }
 
     //metrics
     {

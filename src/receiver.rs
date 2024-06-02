@@ -143,7 +143,7 @@ fn handle_filter(
                 schema: schema.clone(),
             };
 
-            socket.emit("schema", message).ok();
+            socket.emit(RECV_SCHEMA_EVENT_NAME, message).ok();
         }
         Ok(false) => {
             //do nothing
