@@ -37,8 +37,8 @@ ts-rs = { version = "8.1", features = ["chrono-impl"] }
 metrics_cloudwatch = "2.0.1"
 
 step-common-rust = { git = "https://github.com/step-finance/step-common-rust", tag = "0.1.0" }
-step-ingestooor-engine = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "697a711cbc9b1dd39f379fe2a384564632e39fc7" }
-step-ingestooor-sdk = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "697a711cbc9b1dd39f379fe2a384564632e39fc7" }
+step-ingestooor-engine = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "a948c07b0e4b63e77b61a09a4a34450008190c51" }
+step-ingestooor-sdk = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "a948c07b0e4b63e77b61a09a4a34450008190c51" }
 # step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
 # step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
 
