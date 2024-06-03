@@ -28,7 +28,7 @@ jobs:
           command: "cargo fmt --all -- --check"
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:DGzbk5CJwnswRG0ASqEN0+WFlZLnbpVhHZdZfhVtGnQ"
+            - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
       - run:
           name: "Check rust code"
           command: "cargo clippy -- -D warnings --warn clippy::all"
@@ -50,7 +50,7 @@ jobs:
             - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:DGzbk5CJwnswRG0ASqEN0+WFlZLnbpVhHZdZfhVtGnQ"
+            - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
       - run:
           name: "Unit tests"
           command: "cargo test"
@@ -72,7 +72,7 @@ jobs:
             - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:DGzbk5CJwnswRG0ASqEN0+WFlZLnbpVhHZdZfhVtGnQ"
+            - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
       - run:
           name: "Build check"
           command: "cargo check --release"
@@ -122,7 +122,7 @@ workflows:
           pre-steps:
             - add_ssh_keys:
                 fingerprints:
-                  - "SHA256:DGzbk5CJwnswRG0ASqEN0+WFlZLnbpVhHZdZfhVtGnQ"
+                  - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
             - run:
                 name: "ssh agent"
                 command: "eval $(ssh-agent)"
