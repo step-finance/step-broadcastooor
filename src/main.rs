@@ -24,9 +24,9 @@ use clap::Parser;
 use dashmap::DashMap;
 use evalexpr::Node;
 use log::{error, info};
-use tower_http::cors::{Any, CorsLayer};
 use metrics_cloudwatch::metrics;
 use socketioxide::{extract::SocketRef, SocketIo};
+use tower_http::cors::{Any, CorsLayer};
 
 use indexer_rabbitmq::lapin::{options::QueueDeclareOptions, types::FieldTable};
 use step_ingestooor_engine::rabbit_factory;
@@ -121,7 +121,7 @@ async fn main() -> Result<()> {
         let filters = DashMap::<String, DashMap<String, Option<Node>>>::new();
         s.extensions.insert(filters);
         //create the handlers
-        s.on_disconnect(||{
+        s.on_disconnect(|| {
             metrics::decrement_gauge!("CurrentConnections", 1.0);
             info!("Client disconnected");
         });

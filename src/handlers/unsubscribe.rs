@@ -1,8 +1,8 @@
 use dashmap::DashMap;
 use evalexpr::Node;
 use log::{debug, error, info, warn};
-use socketioxide::extract::{SocketRef, TryData};
 use metrics_cloudwatch::metrics;
+use socketioxide::extract::{SocketRef, TryData};
 
 use crate::messages::UnsubscribeRequest;
 
@@ -14,16 +14,15 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
                 "Failed to parse unsubscribe request into UnsubscribeRequest: {}",
                 e
             );
-            if let Err(e) =
-                s.emit(
-                    "serverError",
-                    format!(
-                        "Failed to parse unsubscribe request into UnsubscribeRequest: {}",
-                        e
-                    ),
-                ) {
-                    error!("failed to emit serverError: {}", e);
-                }
+            if let Err(e) = s.emit(
+                "serverError",
+                format!(
+                    "Failed to parse unsubscribe request into UnsubscribeRequest: {}",
+                    e
+                ),
+            ) {
+                error!("failed to emit serverError: {}", e);
+            }
             return;
         }
     };

@@ -1,11 +1,11 @@
 use dashmap::DashMap;
 use evalexpr::{build_operator_tree, Node};
 use log::{debug, error, info};
+use metrics_cloudwatch::metrics;
 use socketioxide::{
     adapter::Room,
     extract::{SocketRef, TryData},
 };
-use metrics_cloudwatch::metrics;
 
 use crate::messages::SubscribeRequest;
 
