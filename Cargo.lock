@@ -6293,7 +6293,7 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-derive"
 version = "0.0.2"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=9351bf13d762f85294958957f046e4ac68c14d88#9351bf13d762f85294958957f046e4ac68c14d88"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=78b477c1c40d2373401550bf8ff094c7a40a4953#78b477c1c40d2373401550bf8ff094c7a40a4953"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6303,7 +6303,7 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-engine"
 version = "0.0.2"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=9351bf13d762f85294958957f046e4ac68c14d88#9351bf13d762f85294958957f046e4ac68c14d88"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=78b477c1c40d2373401550bf8ff094c7a40a4953#78b477c1c40d2373401550bf8ff094c7a40a4953"
 dependencies = [
  "anyhow",
  "bincode",
@@ -6348,7 +6348,7 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-idl-gens"
 version = "0.0.2"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=9351bf13d762f85294958957f046e4ac68c14d88#9351bf13d762f85294958957f046e4ac68c14d88"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=78b477c1c40d2373401550bf8ff094c7a40a4953#78b477c1c40d2373401550bf8ff094c7a40a4953"
 dependencies = [
  "anchor-gen",
  "anchor-lang",
@@ -6358,7 +6358,7 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-parsers"
 version = "0.0.2"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=9351bf13d762f85294958957f046e4ac68c14d88#9351bf13d762f85294958957f046e4ac68c14d88"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=78b477c1c40d2373401550bf8ff094c7a40a4953#78b477c1c40d2373401550bf8ff094c7a40a4953"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6387,7 +6387,7 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-sdk"
 version = "0.0.2"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=9351bf13d762f85294958957f046e4ac68c14d88#9351bf13d762f85294958957f046e4ac68c14d88"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=78b477c1c40d2373401550bf8ff094c7a40a4953#78b477c1c40d2373401550bf8ff094c7a40a4953"
 dependencies = [
  "anyhow",
  "async-trait",
