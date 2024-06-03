@@ -23,7 +23,7 @@ socketioxide = { version = "0.11.0", features = [
     "extensions",
     "state",
     "tracing",
-]}
+] }
 clap = { version = "3.2.23", features = ["derive", "env"] }
 tokio = { version = "1.35.1", features = [
     "time",
@@ -34,10 +34,10 @@ tokio = { version = "1.35.1", features = [
     "sync",
 ] }
 
-step-ingestooor-engine = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "54cccb1b6633ad034dc66abc6546f03a56ebe113" }
-step-ingestooor-sdk = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "54cccb1b6633ad034dc66abc6546f03a56ebe113" }
-#step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
-#step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
+step-ingestooor-engine = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "78b477c1c40d2373401550bf8ff094c7a40a4953" }
+step-ingestooor-sdk = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "78b477c1c40d2373401550bf8ff094c7a40a4953" }
+# step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
+# step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
 
 indexer_rabbitmq = { package = "holaplex-indexer-rabbitmq", git = "https://github.com/step-finance/indexer-geyser-plugin", rev = "10fdb0ca1cc402ca614dba7cff7e06ef87768f62" }
 
