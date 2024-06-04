@@ -1,3 +1,12 @@
 /target
 .env
+
+#preemptive strike on boris
 .idea
+
+#node stuff
+node_modules
+/sdk/dist
+
+#the types are automatically generated when running cargo test on the rust project
+/sdk/src/types
