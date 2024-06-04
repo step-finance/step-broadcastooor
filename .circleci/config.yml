@@ -175,13 +175,10 @@ workflows:
             - run:
                 name: "ssh agent"
                 command: "eval $(ssh-agent)"
-            - run:
-                name: "temp"
-                command: "ls -la /home/circleci/.ssh"
           #below should work as default=$SSH_AUTH_SOCK but isn't for some reason
           #this will break in the future if that id_rsa file is named differently
           #due to a circleci change
-          extra-build-args: "--ssh default=/home/circleci/.ssh/id_rsa_67850448bd97dc7d2971ae1310617c34"
+          extra-build-args: "--ssh default=/home/circleci/.ssh/id_rsa_464f187ab7117fc1e5fd43b2731dd300"
           filters:
             branches:
               only:
