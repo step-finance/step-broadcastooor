@@ -133,7 +133,6 @@ workflows:
             branches:
               ignore:
                 - main
-                - develop
       - test:
           requires:
             - lint
@@ -141,7 +140,6 @@ workflows:
             branches:
               ignore:
                 - main
-                - develop
       - build:
           requires:
             - lint
