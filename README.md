@@ -11,6 +11,9 @@ The SDK can be built locally by running `npm run build` in `./sdk`.  There is an
 
 CI publishes the SDK on `develop` branch commits when the ingestooor-sdk version changes (detected in Cargo.lock). **It uses the version from ingestooor-sdk!**  The SDK is published by CI to NPM as `@stepfinance/broadcastooor`.
 
+### New Schemas
+Any new schemas should be added to `AllTypes.ts` in the sdk folder for export.
+
 ## Development
 Standard rust stuff, just copy `.env.example` to `.env` and update the rabbit url to point to a rabbit server running ingestooor.
 
