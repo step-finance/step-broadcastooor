@@ -3,6 +3,7 @@ import { DataSchemaEmitEvents, DataSchemaListenEvents } from "./IEvents";
 import { SchemaMessage } from "./types/SchemaMessage";
 
 export * from "./IEvents";
+export * from "./AllTypes";
 
 export type SocketIOClient = Socket<DataSchemaListenEvents, DataSchemaEmitEvents>;
 
