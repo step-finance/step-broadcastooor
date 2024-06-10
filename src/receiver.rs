@@ -5,7 +5,7 @@ use indexer_rabbitmq::lapin::{
     options::{BasicConsumeOptions, BasicQosOptions},
     Channel, Queue,
 };
-use log::{debug, error, trace};
+use log::{debug, error, trace, warn};
 use socketioxide::{extract::SocketRef, socket::Socket, SocketIo};
 use step_ingestooor_sdk::schema::{Schema, SchemaTrait};
 use tokio::task;
@@ -107,11 +107,21 @@ fn handle_socket(
     all_filters: &DashMap<String, DashMap<String, Option<Node>>>,
     context: &evalexpr::HashMapContext,
 ) {
+    let mut bad_filters: Option<Vec<String>> = None;
+    let mut empty_room = false;
     if let Some(room_filters) = all_filters.get(topic) {
         for room_filter in room_filters.iter() {
             if let Some(filter) = room_filter.value().as_ref() {
                 let filter_id = room_filter.key();
-                handle_filter(schema, topic, socket, filter_id, filter, context)
+                if !handle_filter(schema, topic, socket, filter_id, filter, context) {
+                    //this filter is erroring, remove it
+                    if bad_filters.is_none() {
+                        bad_filters = Some(Vec::new());
+                    }
+                    if let Some(bad_filters) = &mut bad_filters {
+                        bad_filters.push(filter_id.clone());
+                    }
+                }
             } else {
                 //this is a full room subscription, send the schema to the client
                 let message = SchemaMessage {
@@ -123,6 +133,42 @@ fn handle_socket(
                 socket.emit(RECV_SCHEMA_EVENT_NAME, message).ok();
             }
         }
+        if bad_filters.is_some() {
+            for bad_filter in bad_filters.unwrap() {
+                let removed = room_filters.remove(&bad_filter);
+                warn!(
+                    "filter {} with expr {} failed and removed from subscriptions",
+                    bad_filter,
+                    removed
+                        .unwrap_or_default()
+                        .1
+                        .map(|a| a.to_string())
+                        .unwrap_or_default()
+                );
+                if let Err(e) = socket.emit(
+                    "serverError",
+                    format!(
+                        "filter {} failed and removed from subscriptions",
+                        bad_filter
+                    ),
+                ) {
+                    error!("failed to emit serverError: {}", e);
+                }
+            }
+            if room_filters.len() == 0 {
+                //no filters left, remove the room
+                empty_room = true;
+            }
+        }
+    }
+    if empty_room {
+        debug!(
+            "handle socket: no more filters for room, leaving room {}",
+            topic
+        );
+        if let Err(e) = socket.leave(topic.to_owned()) {
+            error!("failed to leave room: {}", e);
+        }
     }
 }
 
@@ -133,7 +179,8 @@ fn handle_filter(
     filter_id: &String,
     filter: &Node,
     context: &evalexpr::HashMapContext,
-) {
+    //return true if the filter was evaluated successfully
+) -> bool {
     debug!("found room filter {}", filter.to_string());
     match filter.eval_boolean_with_context(context) {
         Ok(true) => {
@@ -144,16 +191,24 @@ fn handle_filter(
             };
 
             socket.emit(RECV_SCHEMA_EVENT_NAME, message).ok();
+            true
         }
         Ok(false) => {
             //do nothing
-            debug!("filter {} evaluated to false", filter_id);
+            trace!("filter {} evaluated to false", filter_id);
+            true
+        }
+        Err(e) if e.to_string().contains(", but got Empty.") => {
+            //this is a valid case - the message has a None value and we're evaluating it
+            trace!("filter {} was evaluating a None value (Empty)", filter_id);
+            true
         }
         Err(e) => {
             error!("filter evaluation failed: {}", e);
             socket
                 .emit("error", format!("filter evaluation failed: {}", e))
                 .ok();
+            false
         }
     }
 }
