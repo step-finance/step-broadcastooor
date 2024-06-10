@@ -16,7 +16,7 @@ serde_json = "1.0.108"
 serde = "1.0.193"
 axum = "0.7.4"
 http = "1.1.0"
-evalexpr = { version = "11.3.0", features = ["regex_support"] }
+evalexpr = { version = "11.3.0", features = [] }
 dashmap = "5.5.3"
 tower-http = { version = "0.5.2", features = ["cors"] }
 socketioxide = { version = "0.11.0", features = [
@@ -37,8 +37,8 @@ ts-rs = { version = "8.1", features = ["chrono-impl"] }
 metrics_cloudwatch = "2.0.1"
 
 step-common-rust = { git = "ssh://git@github.com/step-finance/step-common-rust", tag = "0.1.0" }
-step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "ddfb66cdb92e612e5dce1a92500009553c3b39d0" }
-step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "ddfb66cdb92e612e5dce1a92500009553c3b39d0" }
+step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "8e518c691b809adf44251e1f4689da76d61a56a4" }
+step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "8e518c691b809adf44251e1f4689da76d61a56a4" }
 # step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
 # step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
 
