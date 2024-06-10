@@ -3,7 +3,7 @@ use step_ingestooor_sdk::schema::Schema;
 use ts_rs::TS;
 
 /// A filter allows the server to filter out schemas based on expressions.
-#[derive(Deserialize, Debug, TS)]
+#[derive(Deserialize, Clone, Debug, TS)]
 #[ts(export)]
 pub struct Filter {
     /// An identifier for the filter.  This is used to unsubscribe from a specific filter.  

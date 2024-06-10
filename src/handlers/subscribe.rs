@@ -47,7 +47,7 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
         .or_insert_with(DashMap::<String, Option<Node>>::new);
 
     //add filter for the room
-    if let Some(filter) = msg.filter {
+    if let Some(filter) = msg.filter.clone() {
         match build_operator_tree(&filter.expression) {
             Ok(tree) => {
                 //insert the filter into the room filters
@@ -77,7 +77,13 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
     }
 
     //notify the client that they have subscribed
-    if let Err(e) = s.emit("subscribed", msg.topic.clone()) {
+    if let Err(e) = s.emit(
+        "subscribed",
+        [(
+            msg.topic.clone(),
+            msg.filter.map(|f| f.id).unwrap_or_default(),
+        )],
+    ) {
         error!("failed to emit subscribed: {}", e);
     }
 
