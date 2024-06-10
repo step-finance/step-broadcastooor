@@ -68,6 +68,20 @@ b.unsubscribe("SlotStats", "even-slots");
 console.log("waiting 5 seconds");
 await new Promise((resolve) => setTimeout(resolve, 5000));
 
+//subscribe to odd slots
+console.log("subscribing to odd numbered SlotStats");
+b.subscribe("SlotStats", "odd-slots", "slot % 2 == 1");
+
+console.log("waiting 5 seconds");
+await new Promise((resolve) => setTimeout(resolve, 5000));
+
+//unsub from odd
+console.log("unsubscribing from odd numbered SlotStats");
+b.unsubscribe("SlotStats", "odd-slots");
+
+console.log("waiting 5 seconds");
+await new Promise((resolve) => setTimeout(resolve, 5000));
+
 //closing will remove all listeners and close the socket
 console.log("closing connection");
 b.close();

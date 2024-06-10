@@ -27,7 +27,10 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
         }
     };
 
-    info!("received unsubscribe for {}", msg.topic);
+    info!(
+        "received unsubscribe for {} filter {:?}",
+        msg.topic, msg.filter_id
+    );
 
     //get a reference to filters on the socket
     let all_filters = s
@@ -35,11 +38,13 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
         .get_mut::<DashMap<String, DashMap<String, Option<Node>>>>()
         .unwrap();
 
+    let mut empty_room = false;
     //grab the room filters
     if let Some(room_filters) = all_filters.get_mut(&msg.topic) {
         //leave the filter for the room
-        if let Some(filter_id) = msg.filter_id {
-            if room_filters.remove(&filter_id).is_none() {
+        if let Some(filter_id) = msg.filter_id.clone() {
+            let removed_filter = room_filters.remove(&filter_id);
+            if removed_filter.is_none() {
                 debug!(
                     "no filter found for {} with filter {}",
                     msg.topic, filter_id
@@ -65,7 +70,7 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
             if let Err(e) = s.leave(msg.topic.clone()) {
                 error!("failed to leave room: {}", e);
             }
-            all_filters.remove(&msg.topic);
+            empty_room = true;
         }
     } else {
         //client isn't subscribed to the room
@@ -75,8 +80,16 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
             error!("failed to leave room (wasnt subscribed anyhow?): {}", e);
         }
     }
+
+    if empty_room {
+        all_filters.remove(&msg.topic);
+    }
+
     //notify the client that they have unsubscribed
-    if let Err(e) = s.emit("unsubscribed", msg.topic.clone()) {
+    if let Err(e) = s.emit(
+        "unsubscribed",
+        [(msg.topic.clone(), msg.filter_id.unwrap_or_default())],
+    ) {
         error!("failed to emit unsubscribed: {}", e);
     }
 
