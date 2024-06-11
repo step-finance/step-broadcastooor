@@ -2332,9 +2332,6 @@ name = "evalexpr"
 version = "11.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b41cb9dd076076058a4523f009c900c582279536d0b2e45a29aa930e083cc5"
-dependencies = [
- "regex",
-]
 
 [[package]]
 name = "event-listener"
@@ -6277,8 +6274,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-derive"
-version = "0.1.4"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=ddfb66cdb92e612e5dce1a92500009553c3b39d0#ddfb66cdb92e612e5dce1a92500009553c3b39d0"
+version = "0.1.5"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=8e518c691b809adf44251e1f4689da76d61a56a4#8e518c691b809adf44251e1f4689da76d61a56a4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6287,8 +6284,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-engine"
-version = "0.1.4"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=ddfb66cdb92e612e5dce1a92500009553c3b39d0#ddfb66cdb92e612e5dce1a92500009553c3b39d0"
+version = "0.1.5"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=8e518c691b809adf44251e1f4689da76d61a56a4#8e518c691b809adf44251e1f4689da76d61a56a4"
 dependencies = [
  "anyhow",
  "bincode",
@@ -6333,8 +6330,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-idl-gens"
-version = "0.1.4"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=ddfb66cdb92e612e5dce1a92500009553c3b39d0#ddfb66cdb92e612e5dce1a92500009553c3b39d0"
+version = "0.1.5"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=8e518c691b809adf44251e1f4689da76d61a56a4#8e518c691b809adf44251e1f4689da76d61a56a4"
 dependencies = [
  "anchor-gen",
  "anchor-lang",
@@ -6343,8 +6340,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-parsers"
-version = "0.1.4"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=ddfb66cdb92e612e5dce1a92500009553c3b39d0#ddfb66cdb92e612e5dce1a92500009553c3b39d0"
+version = "0.1.5"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=8e518c691b809adf44251e1f4689da76d61a56a4#8e518c691b809adf44251e1f4689da76d61a56a4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6372,8 +6369,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-sdk"
-version = "0.1.4"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=ddfb66cdb92e612e5dce1a92500009553c3b39d0#ddfb66cdb92e612e5dce1a92500009553c3b39d0"
+version = "0.1.5"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=8e518c691b809adf44251e1f4689da76d61a56a4#8e518c691b809adf44251e1f4689da76d61a56a4"
 dependencies = [
  "anyhow",
  "async-trait",
