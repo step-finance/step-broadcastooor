@@ -189,18 +189,13 @@ fn handle_filter(
                 filter_id: Some(filter_id),
                 schema: schema.clone(),
             };
-
+            debug!("filter {} evaluated to true", filter_id);
             socket.emit(RECV_SCHEMA_EVENT_NAME, message).ok();
             true
         }
         Ok(false) => {
             //do nothing
-            trace!("filter {} evaluated to false", filter_id);
-            true
-        }
-        Err(e) if e.to_string().contains(", but got Empty.") => {
-            //this is a valid case - the message has a None value and we're evaluating it
-            trace!("filter {} was evaluating a None value (Empty)", filter_id);
+            debug!("filter {} evaluated to false", filter_id);
             true
         }
         Err(e) => {
