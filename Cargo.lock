@@ -6247,7 +6247,7 @@ dependencies = [
  "serde",
  "serde_json",
  "socketioxide",
- "step-common-rust",
+ "step-common-rust 0.1.2",
  "step-ingestooor-engine",
  "step-ingestooor-sdk",
  "tokio",
@@ -6258,7 +6258,27 @@ dependencies = [
 [[package]]
 name = "step-common-rust"
 version = "0.1.1"
-source = "git+ssh://git@github.com/step-finance/step-common-rust?tag=0.1.1#85497ebd8d52a0860b798804d8b07c4f927b0b34"
+source = "git+ssh://git@github.com/step-finance/step-common-rust.git?tag=0.1.1#5d6d6dc86561585cc2c6691c6f4d4cd003a970e5"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "env_logger 0.10.2",
+ "evalexpr",
+ "futures",
+ "futures-util",
+ "hostname",
+ "log",
+ "metrics_cloudwatch",
+ "reqwest 0.12.4",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "step-common-rust"
+version = "0.1.2"
+source = "git+ssh://git@github.com/step-finance/step-common-rust?tag=0.1.2#1f151a2b7072fb19f2a162341992796adfdc7b8f"
 dependencies = [
  "anyhow",
  "chrono",
@@ -6278,18 +6298,18 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-derive"
 version = "0.1.6"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=7742243fafe7c629d4f93b2970a7d600e90e408c#7742243fafe7c629d4f93b2970a7d600e90e408c"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=f759c9db793962e2c7a483bc866fea7a0e209db6#f759c9db793962e2c7a483bc866fea7a0e209db6"
 dependencies = [
  "proc-macro2",
  "quote",
- "step-common-rust",
+ "step-common-rust 0.1.1",
  "syn 2.0.66",
 ]
 
 [[package]]
 name = "step-ingestooor-engine"
 version = "0.1.6"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=7742243fafe7c629d4f93b2970a7d600e90e408c#7742243fafe7c629d4f93b2970a7d600e90e408c"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=f759c9db793962e2c7a483bc866fea7a0e209db6#f759c9db793962e2c7a483bc866fea7a0e209db6"
 dependencies = [
  "anyhow",
  "bincode",
@@ -6321,7 +6341,7 @@ dependencies = [
  "solana-transaction-status",
  "spl-token",
  "spl-token-2022",
- "step-common-rust",
+ "step-common-rust 0.1.1",
  "step-ingestooor-parsers",
  "step-ingestooor-sdk",
  "strum 0.26.2",
@@ -6335,7 +6355,7 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-idl-gens"
 version = "0.1.6"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=7742243fafe7c629d4f93b2970a7d600e90e408c#7742243fafe7c629d4f93b2970a7d600e90e408c"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=f759c9db793962e2c7a483bc866fea7a0e209db6#f759c9db793962e2c7a483bc866fea7a0e209db6"
 dependencies = [
  "anchor-gen",
  "anchor-lang",
@@ -6345,7 +6365,7 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-parsers"
 version = "0.1.6"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=7742243fafe7c629d4f93b2970a7d600e90e408c#7742243fafe7c629d4f93b2970a7d600e90e408c"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=f759c9db793962e2c7a483bc866fea7a0e209db6#f759c9db793962e2c7a483bc866fea7a0e209db6"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6374,7 +6394,7 @@ dependencies = [
 [[package]]
 name = "step-ingestooor-sdk"
 version = "0.1.6"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=7742243fafe7c629d4f93b2970a7d600e90e408c#7742243fafe7c629d4f93b2970a7d600e90e408c"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor.git?rev=f759c9db793962e2c7a483bc866fea7a0e209db6#f759c9db793962e2c7a483bc866fea7a0e209db6"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6399,7 +6419,7 @@ dependencies = [
  "solana-sdk",
  "solana-transaction-status",
  "spl-token",
- "step-common-rust",
+ "step-common-rust 0.1.1",
  "step-ingestooor-derive",
  "strum 0.26.2",
  "strum_macros 0.26.3",
