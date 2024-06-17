@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "outDir": "dist",
+    "strict": true,
+    "lib": ["ESNext"],
+    "esModuleInterop": true,
+    "moduleResolution": "NodeNext",
+    "module": "ES2022",
+    "target": "ES2022"
+  },
+  "ts-node": {
+    "esm": true,
+  }, 
+}

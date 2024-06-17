@@ -1,4 +1,4 @@
-FROM rust:1.76-slim-bullseye as build
+FROM rust:1.77-slim-bullseye as build
 
 RUN apt-get update && apt-get install -y pkg-config libssl-dev git openssh-client
 

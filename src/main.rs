@@ -24,10 +24,11 @@ use clap::Parser;
 use dashmap::DashMap;
 use evalexpr::Node;
 use log::{error, info};
+use metrics_cloudwatch::metrics;
+use socketioxide::{extract::SocketRef, SocketIo};
 use tower_http::cors::{Any, CorsLayer};
 
 use indexer_rabbitmq::lapin::{options::QueueDeclareOptions, types::FieldTable};
-use socketioxide::{extract::SocketRef, SocketIo};
 use step_ingestooor_engine::rabbit_factory;
 
 use crate::handlers::{subscribe::handle_subscribe, unsubscribe::handle_unsubscribe};
@@ -41,6 +42,13 @@ mod handlers;
 mod messages;
 #[doc(hidden)]
 mod receiver;
+
+/// The path to the socket.io namespace that handles schema subscriptions
+pub const SCHEMA_SOCKETIO_PATH: &str = "/data_schema";
+/// the path for a healthcheck endpoint
+pub const HEATHCHECK_PATH: &str = "/healthcheck";
+/// The address and port to bind the socket server to
+pub const BIND_ADDR_PORT: &str = "0.0.0.0:3000";
 
 /// The arguments for the broadcastooor. These can be passed as arguments or environment variables.
 #[derive(Parser, PartialEq, Debug)]
@@ -64,6 +72,11 @@ pub struct BroadcastooorArgs {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
+
+    //setup metrics
+    if let Err(e) = step_common_rust::init_metrics("Broadcastooor").await {
+        log::error!("Error initializing metrics: {}", e);
+    }
 
     let args = BroadcastooorArgs::parse();
 
@@ -100,11 +113,18 @@ async fn main() -> Result<()> {
     let (io_layer, io) = SocketIo::new_layer();
 
     //socket handlers simply subscribe and unsubscribe from topics
-    io.ns("/data_schema", |s: SocketRef| {
+    io.ns(SCHEMA_SOCKETIO_PATH, |s: SocketRef| {
+        metrics::increment_counter!("TotalConnections");
+        metrics::increment_gauge!("CurrentConnections", 1.0);
+        info!("Client connected");
         //create the filter map on all sockets
         let filters = DashMap::<String, DashMap<String, Option<Node>>>::new();
         s.extensions.insert(filters);
         //create the handlers
+        s.on_disconnect(|| {
+            metrics::decrement_gauge!("CurrentConnections", 1.0);
+            info!("Client disconnected");
+        });
         s.on("subscribe", handle_subscribe);
         s.on("unsubscribe", handle_unsubscribe);
     });
@@ -123,17 +143,17 @@ async fn main() -> Result<()> {
         .allow_origin(Any);
     let app = axum::Router::new()
         //healthcheck for aws
-        .route("/healthcheck", axum::routing::get(|| async { "ok" }))
+        .route(HEATHCHECK_PATH, axum::routing::get(|| async { "ok" }))
         //socketio
         .layer(io_layer)
         //cors
         .layer(cors_layer);
 
-    //create the sucket server
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    //create the socket server
+    let listener = tokio::net::TcpListener::bind(BIND_ADDR_PORT).await.unwrap();
     let app_thread = axum::serve(listener, app).into_future();
 
-    info!("started listening on all local IPs; port 3000");
+    info!("started listening on {}", BIND_ADDR_PORT);
 
     //wait for either thread to fail
     tokio::select! {

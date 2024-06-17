@@ -1,0 +1,17 @@
+{
+  "name": "broadcastooor-example",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "license": "AaronsMum",
+  "type": "module",
+  "scripts": {
+    "start": "npx tsx index.ts"
+  },
+  "dependencies": {
+    "@types/node": "^18.6.2",
+    "typescript": "^4.7.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.11.0"
+  }
+}

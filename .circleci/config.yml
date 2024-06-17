@@ -13,7 +13,7 @@ executors:
 jobs:
   lint:
     docker:
-      - image: rust:1.73
+      - image: cimg/rust:1.77
     resource_class: xlarge
     steps:
       - checkout
@@ -31,17 +31,17 @@ jobs:
             - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
       - run:
           name: "Check rust code"
-          command: "cargo clippy -- -D warnings --warn clippy::all"
+          command: "cargo clippy --release -- -D warnings --warn clippy::all"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
+            - target/release/.fingerprint
+            - target/release/build
+            - target/release/deps
           key: v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
   test:
     docker:
-      - image: rust:1.73
+      - image: cimg/rust:1.77
     resource_class: xlarge
     steps:
       - checkout
@@ -53,17 +53,21 @@ jobs:
             - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
       - run:
           name: "Unit tests"
-          command: "cargo test"
+          command: "cargo test --release"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
+            - target/release/.fingerprint
+            - target/release/build
+            - target/release/deps
           key: v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - save_cache:
+          paths:
+            - sdk/src/types/
+          key: v1-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
   build:
     docker:
-      - image: rust:1.73
+      - image: cimg/rust:1.77
     resource_class: xlarge
     steps:
       - checkout
@@ -79,10 +83,46 @@ jobs:
       - save_cache:
           paths:
             - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
+            - target/release/.fingerprint
+            - target/release/build
+            - target/release/deps
           key: v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+  publish-sdk:
+    docker:
+      - image: cimg/rust:1.77-node
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
+      # Using the Cargo.lock file to get the version of the Ingestooor SDK
+      # Check if the version is already published, and if not, update the version in package.json
+      - run:
+          name: "Check version"
+          command: |
+            SCHEMA_VERSION_LINE=`sed -e '1,/name = "step-ingestooor-sdk"/d' ./Cargo.lock`
+            SCHEMA_VERSION_LINE=`echo $SCHEMA_VERSION_LINE | head -n 1 | xargs -n 1 printf "%s,"`
+            IFS=',' read -r -a SCHEMA_VERSION_ARRAY \<<< "${SCHEMA_VERSION_LINE}"
+            SCHEMA_VERSION=${SCHEMA_VERSION_ARRAY[2]}
+            echo "Ingestooor Schema Version: ${SCHEMA_VERSION}"
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            PUBLISHED_VERSION=`npm view @stepfinance/broadcastooor version`
+            echo "Current NPM Version: ${PUBLISHED_VERSION}"
+            if [ "${SCHEMA_VERSION}" == "${PUBLISHED_VERSION}" ]; then
+              echo "Version already published"
+              circleci-agent step halt
+            fi
+            cd sdk
+            npm version --no-git-tag-version ${SCHEMA_VERSION}
+      # If didn't halt above: install, build and publish the SDK
+      - run:
+          name: "NPM Install, Build, Publish"
+          command: |
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            cd sdk
+            npm i
+            npm run build
+            npm publish
 
 workflows:
   run-pipeline:
@@ -93,7 +133,6 @@ workflows:
             branches:
               ignore:
                 - main
-                - develop
       - test:
           requires:
             - lint
@@ -101,7 +140,6 @@ workflows:
             branches:
               ignore:
                 - main
-                - develop
       - build:
           requires:
             - lint
@@ -110,6 +148,15 @@ workflows:
             branches:
               ignore:
                 - main
+                - develop
+
+      # Publish SDK to NPM
+      - publish-sdk:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
                 - develop
 
       # Build and push image to ECR
@@ -129,7 +176,7 @@ workflows:
           #below should work as default=$SSH_AUTH_SOCK but isn't for some reason
           #this will break in the future if that id_rsa file is named differently
           #due to a circleci change
-          extra-build-args: "--ssh default=/home/circleci/.ssh/id_rsa_67850448bd97dc7d2971ae1310617c34"
+          extra-build-args: "--ssh default=/home/circleci/.ssh/id_rsa_464f187ab7117fc1e5fd43b2731dd300"
           filters:
             branches:
               only:

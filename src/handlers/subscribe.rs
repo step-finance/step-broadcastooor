@@ -1,6 +1,7 @@
 use dashmap::DashMap;
 use evalexpr::{build_operator_tree, Node};
 use log::{debug, error, info};
+use metrics_cloudwatch::metrics;
 use socketioxide::{
     adapter::Room,
     extract::{SocketRef, TryData},
@@ -8,26 +9,32 @@ use socketioxide::{
 
 use crate::messages::SubscribeRequest;
 
-pub fn handle_subscribe(s: SocketRef, msg: TryData<String>) {
-    let TryData::<String>(msg) = msg;
-    let msg = match msg {
-        Ok(msg) => msg,
-        Err(e) => {
-            error!("failed to parse subscribe request: {}", e);
-            s.emit("error", format!("subscribe error: {}", e)).ok();
-            return;
-        }
-    };
-    let msg = match serde_json::from_str::<SubscribeRequest>(&msg) {
-        Ok(msg) => msg,
-        Err(e) => {
-            error!("failed to parse subscribe request: {}", e);
-            s.emit("error", format!("subscribe error: {}", e)).ok();
+pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
+    debug!("received subscribe request with data: {:?}", msg.0);
+    let msg: SubscribeRequest = match msg {
+        TryData(Ok(msg)) => msg,
+        TryData(Err(e)) => {
+            error!(
+                "Failed to parse subscribe request into SubscribeRequest: {}",
+                e
+            );
+            if let Err(e) = s.emit(
+                "serverError",
+                format!(
+                    "Failed to parse subscribe request into SubscribeRequest: {}",
+                    e
+                ),
+            ) {
+                error!("failed to emit serverError: {}", e);
+            }
             return;
         }
     };
 
-    info!("received subscribe for {}", msg.topic);
+    info!(
+        "received subscribe for {} with filter {:?}",
+        msg.topic, msg.filter
+    );
 
     //get a reference to filters on the socket
     let all_filters = s
@@ -40,7 +47,7 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<String>) {
         .or_insert_with(DashMap::<String, Option<Node>>::new);
 
     //add filter for the room
-    if let Some(filter) = msg.filter {
+    if let Some(filter) = msg.filter.clone() {
         match build_operator_tree(&filter.expression) {
             Ok(tree) => {
                 //insert the filter into the room filters
@@ -48,7 +55,9 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<String>) {
             }
             Err(e) => {
                 error!("failed to parse filter expression: {}", e);
-                s.emit("error", format!("subscribe error: {}", e)).ok();
+                if let Err(e) = s.emit("serverError", format!("subscribe error: {}", e)) {
+                    error!("failed to emit serverError: {}", e);
+                }
                 return;
             }
         }
@@ -63,8 +72,35 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<String>) {
         debug!("subscribed to {}", msg.topic);
     }
     //join the room for socketio
-    s.join(Room::Owned(msg.topic.clone())).ok();
+    if let Err(e) = s.join(Room::Owned(msg.topic.clone())) {
+        error!("failed to join room: {}", e);
+    }
 
     //notify the client that they have subscribed
-    s.emit("subscribed", msg.topic).ok();
+    if let Err(e) = s.emit(
+        "subscribed",
+        [(
+            msg.topic.clone(),
+            msg.filter.map(|f| f.id).unwrap_or_default(),
+        )],
+    ) {
+        error!("failed to emit subscribed: {}", e);
+    }
+
+    //metrics
+    {
+        let mut topic_parts = msg.topic.split('.');
+        let schema_name = topic_parts.next().unwrap_or_default().to_string();
+        let field_name = topic_parts.next().unwrap_or_default().to_string();
+        // let labels = [("Schema", schema_name), ("Field", field_name)];
+        // metrics::increment_gauge!("TotalSubscriptions", 1.0, &labels);
+        metrics::increment_gauge!("CurrentSubscriptions", 1.0,
+            "Schema" => schema_name.clone(),
+            "Field" => field_name.clone(),
+        );
+        metrics::increment_counter!("TotalSubscriptions",
+            "Schema" => schema_name,
+            "Field" => field_name,
+        );
+    }
 }

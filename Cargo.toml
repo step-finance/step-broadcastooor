@@ -1,6 +1,6 @@
 [package]
 name = "step-broadcastooor"
-version = "0.0.2"
+version = "0.1.0"
 authors = ["Dana <dana@step.finance>"]
 repository = "https://github.com/step-finance/step-broadcastooor"
 homepage = "https://step.finance/"
@@ -16,14 +16,14 @@ serde_json = "1.0.108"
 serde = "1.0.193"
 axum = "0.7.4"
 http = "1.1.0"
-evalexpr = "11.3.0"
+evalexpr = { version = "11.3.0", features = [] }
 dashmap = "5.5.3"
 tower-http = { version = "0.5.2", features = ["cors"] }
 socketioxide = { version = "0.11.0", features = [
     "extensions",
     "state",
     "tracing",
-]}
+] }
 clap = { version = "3.2.23", features = ["derive", "env"] }
 tokio = { version = "1.35.1", features = [
     "time",
@@ -33,11 +33,16 @@ tokio = { version = "1.35.1", features = [
     "signal",
     "sync",
 ] }
+ts-rs = { version = "8.1", features = ["chrono-impl"] }
+metrics_cloudwatch = "2.0.1"
 
-step-ingestooor-engine = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "54cccb1b6633ad034dc66abc6546f03a56ebe113" }
-step-ingestooor-sdk = { git = "https://github.com/step-finance/step-ingestooor.git", rev = "54cccb1b6633ad034dc66abc6546f03a56ebe113" }
-#step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
-#step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
+step-common-rust = { git = "ssh://git@github.com/step-finance/step-common-rust", tag = "0.1.2", version = "0.1.2" }
+step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "f759c9db793962e2c7a483bc866fea7a0e209db6" }
+step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "f759c9db793962e2c7a483bc866fea7a0e209db6" }
+
+# step-common-rust = { path = "../step-common-rust" }
+# step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
+# step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
 
 indexer_rabbitmq = { package = "holaplex-indexer-rabbitmq", git = "https://github.com/step-finance/indexer-geyser-plugin", rev = "10fdb0ca1cc402ca614dba7cff7e06ef87768f62" }
 
