@@ -10,9 +10,10 @@ pub struct Filter {
     /// If two filters have the same filter identifier the behavior is undefined. Don't do that.
     pub id: String,
     /// The expression to filter on.
-    /// The schema's fields of types `i64`, `u64`, `f64`, `String`, and `bool` are available in
+    /// The schema's fields of types `i*`, `u*`, `f*`, `String`, `Vec<T>` and `bool` are available in
     /// the expression as their field names. Example: `price > 1000 && price < 2000`.
-    /// `Option<T>` support could be added if needed (defaulting None to type default).
+    /// `Option<T>` unwraps to the value or `()` aka `Empty`.
+    /// Deep combinations like `Option<Vec<Option<String>>>` are untested and may not work.
     /// See [evalexpr] for more information on format, operators, etc. Regex is *not* enabled.
     pub expression: String,
 }
