@@ -1,15 +1,20 @@
-use dashmap::DashMap;
-use evalexpr::{build_operator_tree, Node};
+use std::sync::Arc;
+
+use evalexpr::build_operator_tree;
 use log::{debug, error, info};
 use metrics_cloudwatch::metrics;
 use socketioxide::{
     adapter::Room,
-    extract::{SocketRef, TryData},
+    extract::{Extension, SocketRef, TryData},
 };
 
-use crate::messages::SubscribeRequest;
+use crate::{messages::SubscribeRequest, TopicFilterMap};
 
-pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
+pub fn handle_subscribe(
+    s: SocketRef,
+    all_filters: Extension<Arc<TopicFilterMap>>,
+    msg: TryData<SubscribeRequest>,
+) {
     debug!("received subscribe request with data: {:?}", msg.0);
     let msg: SubscribeRequest = match msg {
         TryData(Ok(msg)) => msg,
@@ -36,15 +41,8 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
         msg.topic, msg.filter
     );
 
-    //get a reference to filters on the socket
-    let all_filters = s
-        .extensions
-        .get_mut::<DashMap<String, DashMap<String, Option<Node>>>>()
-        .unwrap();
     //get the room filters or create a new one
-    let room_filters = all_filters
-        .entry(msg.topic.clone())
-        .or_insert_with(DashMap::<String, Option<Node>>::new);
+    let room_filters = all_filters.entry(msg.topic.clone()).or_default();
 
     //add filter for the room
     if let Some(filter) = msg.filter.clone() {

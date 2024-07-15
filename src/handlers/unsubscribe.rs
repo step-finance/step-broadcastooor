@@ -1,12 +1,16 @@
-use dashmap::DashMap;
-use evalexpr::Node;
+use std::sync::Arc;
+
 use log::{debug, error, info, warn};
 use metrics_cloudwatch::metrics;
-use socketioxide::extract::{SocketRef, TryData};
+use socketioxide::extract::{Extension, SocketRef, TryData};
 
-use crate::messages::UnsubscribeRequest;
+use crate::{messages::UnsubscribeRequest, TopicFilterMap};
 
-pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
+pub fn handle_unsubscribe(
+    s: SocketRef,
+    all_filters: Extension<Arc<TopicFilterMap>>,
+    msg: TryData<UnsubscribeRequest>,
+) {
     let msg: UnsubscribeRequest = match msg {
         TryData(Ok(msg)) => msg,
         TryData(Err(e)) => {
@@ -31,12 +35,6 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
         "received unsubscribe for {} filter {:?}",
         msg.topic, msg.filter_id
     );
-
-    //get a reference to filters on the socket
-    let all_filters = s
-        .extensions
-        .get_mut::<DashMap<String, DashMap<String, Option<Node>>>>()
-        .unwrap();
 
     let mut empty_room = false;
     //grab the room filters

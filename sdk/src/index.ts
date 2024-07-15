@@ -1,4 +1,4 @@
-import { Socket, Manager } from "socket.io-client";
+import { Socket, io } from "socket.io-client";
 import { DataSchemaEmitEvents, DataSchemaListenEvents } from "./IEvents";
 import { SchemaMessage } from "./types/SchemaMessage";
 
@@ -8,11 +8,9 @@ export * from "./AllTypes";
 export type SocketIOClient = Socket<DataSchemaListenEvents, DataSchemaEmitEvents>;
 
 export class StepDataSchemaBroadcastooor {
-  private manager: Manager<DataSchemaListenEvents, DataSchemaEmitEvents>;
   private socket: SocketIOClient;
-  constructor(url: string) {
-    this.manager = new Manager<DataSchemaListenEvents, DataSchemaEmitEvents>(url);
-    this.socket = this.manager.socket("/data_schema");
+  constructor(url: string, token: string | undefined = undefined) {
+    this.socket = io(url + "/data_schema", {auth:{token}});
   }
 
   onConnect(listener: () => void | Promise<void>): this {
@@ -64,7 +62,5 @@ export class StepDataSchemaBroadcastooor {
   close() {
     this.socket.removeAllListeners();
     this.socket.disconnect();
-    this.manager.removeAllListeners();
-    this.manager._close();
   }
 }
