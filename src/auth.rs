@@ -23,15 +23,21 @@ pub mod claims {
         pub exp: i64,
     }
     impl Root {
+        
+        #[inline]
         pub fn has_role(&self, role: &String, regarding: Option<&str>) -> bool {
             self.global_roles_and_products().roles.contains(role)
                 || regarding
                     .map(|a| self.roles_regarding(a).roles.contains(role))
                     .unwrap_or(false)
         }
+
+        #[inline]
         pub fn global_roles_and_products(&self) -> &RolesAndProducts {
             self.roles_regarding("globalRolesAndProducts")
         }
+
+        #[inline]
         pub fn roles_regarding(&self, regarding: &str) -> &RolesAndProducts {
             self.roles_and_products_map.get(regarding).unwrap()
         }

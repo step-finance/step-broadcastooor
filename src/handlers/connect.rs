@@ -50,6 +50,7 @@ pub fn handle_connect(
 }
 
 //uses the auth passed in, or tries to get it from the headers
+#[inline]
 fn get_auth(auth: Result<AuthData, serde_json::Error>, s: &SocketRef) -> Option<AuthData> {
     let mut auth = auth.ok();
     if auth.is_none() {
@@ -70,6 +71,7 @@ fn get_auth(auth: Result<AuthData, serde_json::Error>, s: &SocketRef) -> Option<
 }
 
 //validate the jwt token or origin
+#[inline]
 fn auth_check(auth: Option<AuthData>, origin: Option<String>, state: &BroadcastooorState) -> bool {
     if let Some(auth) = auth {
         let claims: Result<Token<Header, claims::Root, _>, _> =
