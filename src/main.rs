@@ -17,31 +17,36 @@
 //! Some schemas are also published as general topics as just `<schema_name>`.
 //!
 //! For specific schemas, and their fields exposed as topics, see the [step_ingestooor_sdk::schema] module.
-use std::future::IntoFuture;
+use std::{future::IntoFuture, sync::Arc};
 
 use anyhow::Result;
 use clap::Parser;
 use dashmap::DashMap;
 use evalexpr::Node;
+use handlers::connect::handle_connect;
+use hmac::{Hmac, Mac};
 use log::{error, info};
-use metrics_cloudwatch::metrics;
-use socketioxide::{extract::SocketRef, SocketIo};
-use tower_http::cors::{Any, CorsLayer};
 
 use indexer_rabbitmq::lapin::{options::QueueDeclareOptions, types::FieldTable};
+use socketioxide::SocketIoBuilder;
 use step_ingestooor_engine::rabbit_factory;
-
-use crate::handlers::{subscribe::handle_subscribe, unsubscribe::handle_unsubscribe};
 
 #[doc(inline)]
 pub use messages::*;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
+#[doc(hidden)]
+mod auth;
 #[doc(hidden)]
 mod handlers;
 #[doc(hidden)]
 mod messages;
 #[doc(hidden)]
 mod receiver;
+#[doc(hidden)]
+mod state;
+
+type TopicFilterMap = DashMap<String, DashMap<String, Option<Node>>>;
 
 /// The path to the socket.io namespace that handles schema subscriptions
 pub const SCHEMA_SOCKETIO_PATH: &str = "/data_schema";
@@ -65,12 +70,24 @@ pub struct BroadcastooorArgs {
     /// This loosely translates to # simultaneous messages being processed
     #[clap(long, env)]
     pub rabbitmq_prefetch: Option<u16>,
+
+    /// The domains to allow connections from
+    #[clap(long, env)]
+    pub whitelisted_origins: String,
+
+    /// The secret to use for JWTs
+    #[clap(long, env)]
+    pub jwt_secret: String,
+
+    /// The secret to use for JWTs
+    #[clap(long, env, default_value = "false", parse(try_from_str))]
+    pub no_auth: bool,
 }
 
 #[doc(hidden)]
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv::dotenv().ok();
+    dotenv::dotenv().unwrap();
     env_logger::init();
 
     //setup metrics
@@ -79,6 +96,11 @@ async fn main() -> Result<()> {
     }
 
     let args = BroadcastooorArgs::parse();
+
+    //if no auth, log an error letting the user know
+    if args.no_auth {
+        error!("No auth is enabled, this is a security risk");
+    }
 
     //rabbit setup
     let connection = rabbit_factory::amqp_connect(args.rabbitmq_url, "broadcastooor").await?;
@@ -109,25 +131,51 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    //socket server setup
-    let (io_layer, io) = SocketIo::new_layer();
+    //read the allowed origins
+    let whitelisted_origins: Vec<_> = args
+        .whitelisted_origins
+        .split(',')
+        .map(|a| a.to_string())
+        .collect();
 
-    //socket handlers simply subscribe and unsubscribe from topics
-    io.ns(SCHEMA_SOCKETIO_PATH, |s: SocketRef| {
-        metrics::increment_counter!("TotalConnections");
-        metrics::increment_gauge!("CurrentConnections", 1.0);
-        info!("Client connected");
-        //create the filter map on all sockets
-        let filters = DashMap::<String, DashMap<String, Option<Node>>>::new();
-        s.extensions.insert(filters);
-        //create the handlers
-        s.on_disconnect(|| {
-            metrics::decrement_gauge!("CurrentConnections", 1.0);
-            info!("Client disconnected");
-        });
-        s.on("subscribe", handle_subscribe);
-        s.on("unsubscribe", handle_unsubscribe);
+    log::debug!(
+        "Allowed domains configured using allowed_domains: {:?}",
+        whitelisted_origins
+    );
+
+    let whitelisted_origins_clone = whitelisted_origins.clone();
+    let allow_origin_predicate = AllowOrigin::predicate(move |origin, _| {
+        let origin = origin.to_str().unwrap();
+        whitelisted_origins_clone.iter().any(|a| origin.contains(a))
     });
+
+    //build the tower layers
+    let cors_layer = CorsLayer::new()
+        //allow requests from origins matching
+        .allow_origin(allow_origin_predicate);
+
+    //create state for the socket server to have
+    let state = state::BroadcastooorState::new(
+        whitelisted_origins,
+        Hmac::new_from_slice(args.jwt_secret.as_bytes())?,
+        args.no_auth,
+    );
+
+    //socket server setup
+    let (io_layer, io) = SocketIoBuilder::new()
+        .with_state(Arc::new(state))
+        .build_layer();
+
+    //handle the connection event, which does auth & sets up event listeners
+    io.ns(SCHEMA_SOCKETIO_PATH, handle_connect);
+
+    let app = axum::Router::new()
+        //healthcheck for aws
+        .route(HEATHCHECK_PATH, axum::routing::get(|| async { "ok" }))
+        //socketio
+        .layer(io_layer)
+        //cors
+        .layer(cors_layer);
 
     //create a thread that uses rabbit to listen and publish schemas
     let publisher_thread = tokio::spawn(receiver::run_rabbit_thread(
@@ -136,18 +184,6 @@ async fn main() -> Result<()> {
         args.rabbitmq_prefetch.unwrap_or(64_u16),
         io,
     ));
-
-    //build the tower layers
-    let cors_layer = CorsLayer::new()
-        //testing - allow requests from any origin
-        .allow_origin(Any);
-    let app = axum::Router::new()
-        //healthcheck for aws
-        .route(HEATHCHECK_PATH, axum::routing::get(|| async { "ok" }))
-        //socketio
-        .layer(io_layer)
-        //cors
-        .layer(cors_layer);
 
     //create the socket server
     let listener = tokio::net::TcpListener::bind(BIND_ADDR_PORT).await.unwrap();
