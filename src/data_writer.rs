@@ -1,6 +1,7 @@
 use tokio::{sync::mpsc, time::sleep};
 use tokio_postgres::{types::ToSql, NoTls};
 
+#[derive(Debug)]
 pub struct ApiLog {
     pub auth_key: String,
     pub auth_type: i16,
@@ -34,7 +35,9 @@ pub async fn create_database_writer_task(
 ) {
     // If there is no connection string, just loop forever
     if con_string.is_none() {
-        while rx.recv().await.is_some() {}
+        while let Some(a) = rx.recv().await {
+            log::debug!("ApiLog: {:?}", a);
+        }
         return;
     }
 
@@ -59,14 +62,14 @@ pub async fn create_database_writer_task(
             }
         });
 
-        let query = "call auth.fn_insert_time_api_log($1, $2, $3, $4, $5, $6, $7, $8)";
+        let query = "call auth.fn_insert_time_api_log($1, $2, $3, $4, $5, $6, $7, $8);";
         let stmt = client.prepare(query).await.unwrap();
         //now loop on the receiver and write to the database
         while let Some(log) = rx.recv().await {
             let params = &log.to_db_params();
             if let Err(e) = client.execute(&stmt, params).await {
                 log::error!("Error writing to database: {}", e);
-                //break out to the retry logic
+                //break out to the reconnect logic
                 break;
             }
         }
