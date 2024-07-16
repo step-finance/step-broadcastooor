@@ -13,6 +13,7 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct ConnectedUserInfo {
+    pub ip_address: Option<String>,
     pub origin: Option<String>,
     pub claims: Option<claims::Root>,
 }
@@ -29,13 +30,36 @@ pub fn handle_connect(
     let origin = headers
         .get("Origin")
         .and_then(|v| v.to_str().ok().map(String::from));
+    log::debug!("Origin: {:?}", origin);
+
+    //get the forwarded ip
+    let forwarded_for = headers.get("X-Forwarded-For").and_then(|v| {
+        v.to_str()
+            .ok()
+            .map(|a| String::from(a.split(',').next().unwrap()))
+    });
+    log::debug!("X-Forwarded-For: {:?}", forwarded_for);
 
     //check auth
     let auth_ok = auth_check(&auth, &origin, &state);
+    log::debug!("Auth ok: {:?}", auth_ok);
+
+    //throw the claims data in the extensions
+    let user = ConnectedUserInfo {
+        ip_address: forwarded_for,
+        origin,
+        claims: auth_ok.1,
+    };
+    let user = Arc::new(user);
+    let user_ref = user.clone();
+    s.extensions.insert(user_ref);
+
     if !state.no_auth && !auth_ok.0 {
         log::info!("Invalid auth");
         s.emit("serverError", "Invalid auth").ok();
         s.disconnect().ok();
+        //send log for auth err
+        state.send_log_with_message(&user, "auth-fail", auth.as_ref(), 200);
         return;
     }
 
@@ -43,24 +67,25 @@ pub fn handle_connect(
     metrics::increment_gauge!("CurrentConnections", 1.0);
     log::info!("Client connected");
 
-    //throw the claims data in the extensions
-    let user = ConnectedUserInfo {
-        origin,
-        claims: auth_ok.1,
-    };
-    s.extensions.insert(Arc::new(user));
-
     //create the empty filter map on all sockets
     let filters = TopicFilterMap::new();
     s.extensions.insert(Arc::new(filters));
 
     //create the handlers
-    s.on_disconnect(|| {
+    let user_ref2 = user.clone();
+    let state_ref = state.clone();
+    s.on_disconnect(move || {
+        //send log on disconnect
+        state_ref.send_log(&user_ref2, "disconnect", 200);
+
         metrics::decrement_gauge!("CurrentConnections", 1.0);
         log::info!("Client disconnected");
     });
     s.on("subscribe", handle_subscribe);
     s.on("unsubscribe", handle_unsubscribe);
+
+    //send log for connect
+    state.send_log(&user, "connect", 200);
 }
 
 //uses the auth passed in, or tries to get it from the headers

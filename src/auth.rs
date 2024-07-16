@@ -1,6 +1,7 @@
+use serde::Serialize;
 use serde_derive::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AuthData {
     pub token: String,
 }

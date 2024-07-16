@@ -1,9 +1,10 @@
+use serde::Serialize;
 use tokio::sync::mpsc;
 
 use hmac::Hmac;
 use sha2::Sha256;
 
-use crate::data_writer::ApiLog;
+use crate::{data_writer::ApiLog, handlers::connect::ConnectedUserInfo};
 
 pub struct BroadcastooorState {
     pub whitelisted_origins: Vec<String>,
@@ -25,5 +26,24 @@ impl BroadcastooorState {
             no_auth,
             db_log,
         }
+    }
+    pub fn send_log_with_message<T: Serialize>(
+        &self,
+        user: &ConnectedUserInfo,
+        action: &str,
+        message: Option<&T>,
+        status: i32,
+    ) {
+        let mut api_log = ApiLog::from_user(user);
+        api_log.query_params = message.map(serde_json::to_value).transpose().ok().flatten();
+        api_log.status_code = Some(status);
+        api_log.endpoint = action.to_string();
+        self.db_log.send(api_log).ok();
+    }
+    pub fn send_log(&self, user: &ConnectedUserInfo, action: &str, status: i32) {
+        let mut api_log = ApiLog::from_user(user);
+        api_log.status_code = Some(status);
+        api_log.endpoint = action.to_string();
+        self.db_log.send(api_log).ok();
     }
 }

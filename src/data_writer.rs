@@ -1,16 +1,18 @@
 use tokio::{sync::mpsc, time::sleep};
 use tokio_postgres::{types::ToSql, NoTls};
 
+use crate::handlers::connect::ConnectedUserInfo;
+
 #[derive(Debug)]
 pub struct ApiLog {
-    pub auth_key: String,
-    pub auth_type: i16,
+    pub auth_key: Option<String>,
+    pub auth_type: Option<i16>,
     pub endpoint: String,
-    pub query_params: serde_json::Value,
+    pub query_params: Option<serde_json::Value>,
     pub start_time: i64,
     pub end_time: i64,
-    pub ip_address: String,
-    pub status_code: i32,
+    pub ip_address: Option<String>,
+    pub status_code: Option<i32>,
 }
 
 impl ApiLog {
@@ -26,6 +28,31 @@ impl ApiLog {
             &self.ip_address,
             &self.status_code,
         ]
+    }
+    #[inline]
+    pub fn from_user(user: &ConnectedUserInfo) -> Self {
+        let claims = user.claims.as_ref();
+        let now = chrono::Utc::now().timestamp();
+        Self {
+            auth_key: claims
+                .and_then(|c| c.api_key.as_ref().or(c.public_key.as_ref()))
+                .cloned(),
+            auth_type: claims.and_then(|c| {
+                if c.api_key.is_some() {
+                    Some(1)
+                } else if c.public_key.is_some() {
+                    Some(2)
+                } else {
+                    None
+                }
+            }),
+            endpoint: "/data_schema".to_string(),
+            query_params: None,
+            start_time: now,
+            end_time: now,
+            ip_address: user.ip_address.clone(),
+            status_code: None,
+        }
     }
 }
 

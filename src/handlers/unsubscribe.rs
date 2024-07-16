@@ -2,13 +2,18 @@ use std::sync::Arc;
 
 use log::{debug, error, info, warn};
 use metrics_cloudwatch::metrics;
-use socketioxide::extract::{Extension, SocketRef, TryData};
+use serde_json::json;
+use socketioxide::extract::{Extension, SocketRef, State, TryData};
 
-use crate::{messages::UnsubscribeRequest, TopicFilterMap};
+use crate::{messages::UnsubscribeRequest, state::BroadcastooorState, TopicFilterMap};
+
+use super::connect::ConnectedUserInfo;
 
 pub fn handle_unsubscribe(
     s: SocketRef,
     all_filters: Extension<Arc<TopicFilterMap>>,
+    user: Extension<Arc<ConnectedUserInfo>>,
+    state: State<Arc<BroadcastooorState>>,
     msg: TryData<UnsubscribeRequest>,
 ) {
     let msg: UnsubscribeRequest = match msg {
@@ -27,6 +32,7 @@ pub fn handle_unsubscribe(
             ) {
                 error!("failed to emit serverError: {}", e);
             }
+            state.send_log_with_message(&user, "unsubscribe", Some(&e.to_string()), 500);
             return;
         }
     };
@@ -50,6 +56,15 @@ pub fn handle_unsubscribe(
                 if let Err(e) = s.emit("serverError", "filter not found") {
                     error!("failed to emit serverError: {}", e);
                 }
+                state.send_log_with_message(
+                    &user,
+                    "unsubscribe",
+                    Some(&json!({
+                        "error": "filter not found",
+                        "message": msg,
+                    })),
+                    500,
+                );
                 return;
             }
             debug!("unsubscribed from {} filter {}", msg.topic, filter_id);
@@ -59,6 +74,15 @@ pub fn handle_unsubscribe(
                 if let Err(e) = s.emit("serverError", "not subscribed genericly to that topic") {
                     error!("failed to emit serverError: {}", e);
                 }
+                state.send_log_with_message(
+                    &user,
+                    "unsubscribe",
+                    Some(&json!({
+                        "error": "not subscribed genericly to that topic",
+                        "message": msg,
+                    })),
+                    500,
+                );
                 return;
             }
             debug!("unsubscribed from {}", msg.topic);
@@ -86,10 +110,12 @@ pub fn handle_unsubscribe(
     //notify the client that they have unsubscribed
     if let Err(e) = s.emit(
         "unsubscribed",
-        [(msg.topic.clone(), msg.filter_id.unwrap_or_default())],
+        [(msg.topic.clone(), msg.filter_id.as_ref())],
     ) {
         error!("failed to emit unsubscribed: {}", e);
     }
+
+    state.send_log_with_message(&user, "unsubscribe", Some(&msg), 200);
 
     //metrics
     {
