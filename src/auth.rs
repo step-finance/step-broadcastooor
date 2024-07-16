@@ -23,7 +23,6 @@ pub mod claims {
         pub exp: i64,
     }
     impl Root {
-        
         #[inline]
         pub fn has_role(&self, role: &String, regarding: Option<&str>) -> bool {
             self.global_roles_and_products().roles.contains(role)
