@@ -13,11 +13,12 @@ pub struct ApiLog {
     pub end_time: i64,
     pub ip_address: Option<String>,
     pub status_code: Option<i32>,
+    pub referer: Option<String>,
 }
 
 impl ApiLog {
     #[inline]
-    pub fn to_db_params(&self) -> [&(dyn ToSql + Sync); 8] {
+    pub fn to_db_params(&self) -> [&(dyn ToSql + Sync); 9] {
         [
             &self.auth_key,
             &self.auth_type,
@@ -27,6 +28,7 @@ impl ApiLog {
             &self.end_time,
             &self.ip_address,
             &self.status_code,
+            &self.referer,
         ]
     }
     #[inline]
@@ -52,6 +54,7 @@ impl ApiLog {
             end_time: now,
             ip_address: user.ip_address.clone(),
             status_code: None,
+            referer: None,
         }
     }
 }
@@ -89,7 +92,7 @@ pub async fn create_database_writer_task(
             }
         });
 
-        let query = "call auth.fn_insert_time_api_log($1, $2, $3, $4, $5, $6, $7, $8);";
+        let query = "call auth.fn_insert_time_api_log($1, $2, $3, $4, $5, $6, $7, $8, $9);";
         let stmt = client.prepare(query).await.unwrap();
         //now loop on the receiver and write to the database
         while let Some(log) = rx.recv().await {

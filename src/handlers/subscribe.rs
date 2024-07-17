@@ -37,7 +37,7 @@ pub fn handle_subscribe(
             ) {
                 error!("failed to emit serverError: {}", e);
             }
-            state.send_log_with_message(&user, "subscribe", Some(&e.to_string()), 500);
+            state.send_log_with_message(&user, "subscribe", Some(&e.to_string()), 500, None);
             return;
         }
     };
@@ -70,6 +70,7 @@ pub fn handle_subscribe(
                         "message": msg,
                     })),
                     500,
+                    None,
                 );
                 return;
             }
@@ -103,7 +104,7 @@ pub fn handle_subscribe(
         error!("failed to emit subscribed: {}", e);
     }
 
-    state.send_log_with_message(&user, "subscribe", Some(&msg), 200);
+    state.send_log_with_message(&user, "subscribe", Some(&msg), 200, None);
 
     //metrics
     {

@@ -32,7 +32,7 @@ pub fn handle_unsubscribe(
             ) {
                 error!("failed to emit serverError: {}", e);
             }
-            state.send_log_with_message(&user, "unsubscribe", Some(&e.to_string()), 500);
+            state.send_log_with_message(&user, "unsubscribe", Some(&e.to_string()), 500, None);
             return;
         }
     };
@@ -64,6 +64,7 @@ pub fn handle_unsubscribe(
                         "message": msg,
                     })),
                     500,
+                    None,
                 );
                 return;
             }
@@ -82,6 +83,7 @@ pub fn handle_unsubscribe(
                         "message": msg,
                     })),
                     500,
+                    None,
                 );
                 return;
             }
@@ -115,7 +117,7 @@ pub fn handle_unsubscribe(
         error!("failed to emit unsubscribed: {}", e);
     }
 
-    state.send_log_with_message(&user, "unsubscribe", Some(&msg), 200);
+    state.send_log_with_message(&user, "unsubscribe", Some(&msg), 200, None);
 
     //metrics
     {

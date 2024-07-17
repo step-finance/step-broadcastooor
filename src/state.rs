@@ -33,17 +33,26 @@ impl BroadcastooorState {
         action: &str,
         message: Option<&T>,
         status: i32,
+        referer: Option<String>,
     ) {
         let mut api_log = ApiLog::from_user(user);
         api_log.query_params = message.map(serde_json::to_value).transpose().ok().flatten();
         api_log.status_code = Some(status);
         api_log.endpoint = action.to_string();
+        api_log.referer = referer;
         self.db_log.send(api_log).ok();
     }
-    pub fn send_log(&self, user: &ConnectedUserInfo, action: &str, status: i32) {
+    pub fn send_log(
+        &self,
+        user: &ConnectedUserInfo,
+        action: &str,
+        status: i32,
+        referer: Option<String>,
+    ) {
         let mut api_log = ApiLog::from_user(user);
         api_log.status_code = Some(status);
         api_log.endpoint = action.to_string();
+        api_log.referer = referer;
         self.db_log.send(api_log).ok();
     }
 }
