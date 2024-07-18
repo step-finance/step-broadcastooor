@@ -97,7 +97,7 @@ pub struct BroadcastooorArgs {
 #[doc(hidden)]
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv::dotenv().unwrap();
+    dotenv::dotenv().ok();
     env_logger::init();
 
     //setup metrics
