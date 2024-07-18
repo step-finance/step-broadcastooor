@@ -3,7 +3,7 @@ use step_ingestooor_sdk::schema::Schema;
 use ts_rs::TS;
 
 /// A filter allows the server to filter out schemas based on expressions.
-#[derive(Deserialize, Clone, Debug, TS)]
+#[derive(Serialize, Deserialize, Clone, Debug, TS)]
 #[ts(export)]
 pub struct Filter {
     /// An identifier for the filter.  This is used to unsubscribe from a specific filter.  
@@ -19,7 +19,7 @@ pub struct Filter {
 }
 
 /// A message to subscribe to a topic, and optionally a specific filter.
-#[derive(Deserialize, Debug, TS)]
+#[derive(Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
 pub struct SubscribeRequest {
     /// The topic to subscribe to.  See [step_ingestooor_sdk::schema]
@@ -31,7 +31,7 @@ pub struct SubscribeRequest {
 
 /// A message to unsubscribe from a topic, and optionally a specific filter.
 /// There is no way to wildcard unsubscribe from all filters on a topic.
-#[derive(Deserialize, Debug, TS)]
+#[derive(Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
 pub struct UnsubscribeRequest {
     pub topic: String,

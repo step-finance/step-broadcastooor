@@ -3,16 +3,21 @@ use std::sync::Arc;
 use evalexpr::build_operator_tree;
 use log::{debug, error, info};
 use metrics_cloudwatch::metrics;
+use serde_json::json;
 use socketioxide::{
     adapter::Room,
-    extract::{Extension, SocketRef, TryData},
+    extract::{Extension, SocketRef, State, TryData},
 };
 
-use crate::{messages::SubscribeRequest, TopicFilterMap};
+use crate::{messages::SubscribeRequest, state::BroadcastooorState, TopicFilterMap};
+
+use super::connect::ConnectedUserInfo;
 
 pub fn handle_subscribe(
     s: SocketRef,
     all_filters: Extension<Arc<TopicFilterMap>>,
+    user: Extension<Arc<ConnectedUserInfo>>,
+    state: State<Arc<BroadcastooorState>>,
     msg: TryData<SubscribeRequest>,
 ) {
     debug!("received subscribe request with data: {:?}", msg.0);
@@ -32,6 +37,7 @@ pub fn handle_subscribe(
             ) {
                 error!("failed to emit serverError: {}", e);
             }
+            state.send_log_with_message(&user, "subscribe", Some(&e.to_string()), 500, None);
             return;
         }
     };
@@ -56,6 +62,16 @@ pub fn handle_subscribe(
                 if let Err(e) = s.emit("serverError", format!("subscribe error: {}", e)) {
                     error!("failed to emit serverError: {}", e);
                 }
+                state.send_log_with_message(
+                    &user,
+                    "subscribe",
+                    Some(&json!({
+                        "error": "failed to parse filter expression",
+                        "message": msg,
+                    })),
+                    500,
+                    None,
+                );
                 return;
             }
         }
@@ -79,11 +95,16 @@ pub fn handle_subscribe(
         "subscribed",
         [(
             msg.topic.clone(),
-            msg.filter.map(|f| f.id).unwrap_or_default(),
+            msg.filter
+                .as_ref()
+                .map(|f| f.id.clone())
+                .unwrap_or_default(),
         )],
     ) {
         error!("failed to emit subscribed: {}", e);
     }
+
+    state.send_log_with_message(&user, "subscribe", Some(&msg), 200, None);
 
     //metrics
     {

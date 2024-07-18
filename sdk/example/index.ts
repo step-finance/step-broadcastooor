@@ -38,7 +38,7 @@ console.log("subscribing to SlotStats");
 b.subscribe("SlotStats");
 
 console.log("waiting 5 seconds");
-await new Promise((resolve) => setTimeout(resolve, 500000));
+await new Promise((resolve) => setTimeout(resolve, 5000));
 
 //you can also subscribe to a topic with a filter. note that this will result in dupe
 //messages in this case since the above topic gets all slots and this one gets only even slots

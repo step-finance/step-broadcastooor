@@ -22,10 +22,10 @@ use std::{future::IntoFuture, sync::Arc};
 use anyhow::Result;
 use clap::Parser;
 use dashmap::DashMap;
+use data_writer::ApiLog;
 use evalexpr::Node;
 use handlers::connect::handle_connect;
 use hmac::{Hmac, Mac};
-use log::{error, info};
 
 use indexer_rabbitmq::lapin::{options::QueueDeclareOptions, types::FieldTable};
 use socketioxide::SocketIoBuilder;
@@ -37,6 +37,8 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 
 #[doc(hidden)]
 mod auth;
+#[doc(hidden)]
+mod data_writer;
 #[doc(hidden)]
 mod handlers;
 #[doc(hidden)]
@@ -82,6 +84,14 @@ pub struct BroadcastooorArgs {
     /// The secret to use for JWTs
     #[clap(long, env, default_value = "false", parse(try_from_str))]
     pub no_auth: bool,
+
+    /// Should we log to the database
+    #[clap(long, env, default_value = "true", parse(try_from_str))]
+    pub no_db_log: bool,
+
+    /// The database connection string for logging
+    #[clap(long, env, required_if_eq("no_db_log", "false"))]
+    pub database_con_string: Option<String>,
 }
 
 #[doc(hidden)]
@@ -99,8 +109,34 @@ async fn main() -> Result<()> {
 
     //if no auth, log an error letting the user know
     if args.no_auth {
-        error!("No auth is enabled, this is a security risk");
+        log::error!("No auth is enabled, this is a security risk");
     }
+
+    //if no auth, log an error letting the user know
+    if args.no_db_log {
+        log::error!("No database logging, only use for local testing");
+    }
+
+    //database thread setup
+    //quick db test first
+    if !args.no_db_log {
+        log::debug!("database logging enabled, testing connection");
+        let (_, _) = tokio_postgres::connect(
+            args.database_con_string.as_ref().unwrap(),
+            tokio_postgres::NoTls,
+        )
+        .await?;
+        log::debug!("database connection successful");
+    }
+    let (tx, rx) = tokio::sync::mpsc::unbounded_channel::<ApiLog>();
+    let db_thread = tokio::spawn(data_writer::create_database_writer_task(
+        rx,
+        if args.no_db_log {
+            None
+        } else {
+            args.database_con_string
+        },
+    ));
 
     //rabbit setup
     let connection = rabbit_factory::amqp_connect(args.rabbitmq_url, "broadcastooor").await?;
@@ -159,6 +195,7 @@ async fn main() -> Result<()> {
         whitelisted_origins,
         Hmac::new_from_slice(args.jwt_secret.as_bytes())?,
         args.no_auth,
+        tx,
     );
 
     //socket server setup
@@ -178,7 +215,7 @@ async fn main() -> Result<()> {
         .layer(cors_layer);
 
     //create a thread that uses rabbit to listen and publish schemas
-    let publisher_thread = tokio::spawn(receiver::run_rabbit_thread(
+    let rabbit_thread = tokio::spawn(receiver::run_rabbit_thread(
         channel,
         queue,
         args.rabbitmq_prefetch.unwrap_or(64_u16),
@@ -189,18 +226,21 @@ async fn main() -> Result<()> {
     let listener = tokio::net::TcpListener::bind(BIND_ADDR_PORT).await.unwrap();
     let app_thread = axum::serve(listener, app).into_future();
 
-    info!("started listening on {}", BIND_ADDR_PORT);
+    log::info!("started listening on {}", BIND_ADDR_PORT);
 
     //wait for either thread to fail
     tokio::select! {
-        Err(e) = publisher_thread => {
-            error!("publisher thread failed {}", e);
+        e = rabbit_thread => {
+            log::error!("publisher thread exited {:?}", e);
         }
-        Err(e) = app_thread => {
-            error!("app thread failed {}", e);
+        e = app_thread => {
+            log::error!("app thread exited {:?}", e);
+        }
+        e = db_thread => {
+            log::error!("db thread exited {:?}", e);
         }
     };
 
-    error!("broadcastooor exiting");
+    log::error!("broadcastooor exiting");
     Ok(())
 }

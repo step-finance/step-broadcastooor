@@ -4586,6 +4586,8 @@ dependencies = [
  "fallible-iterator",
  "postgres-derive",
  "postgres-protocol",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -7330,6 +7332,7 @@ dependencies = [
  "step-ingestooor-engine",
  "step-ingestooor-sdk",
  "tokio",
+ "tokio-postgres",
  "tower-http",
  "ts-rs",
 ]
