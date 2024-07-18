@@ -99,7 +99,8 @@ pub async fn create_database_writer_task(
             let params = &log.to_db_params();
             if let Err(e) = client.execute(&stmt, params).await {
                 log::error!("Error writing to database: {}", e);
-                //break out to the reconnect logic
+                //break out to the reconnect logic after a pause to prevent fast loops on err
+                sleep(std::time::Duration::from_secs(5)).await;
                 break;
             }
         }
