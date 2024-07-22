@@ -1,15 +1,25 @@
-use dashmap::DashMap;
-use evalexpr::{build_operator_tree, Node};
+use std::sync::Arc;
+
+use evalexpr::build_operator_tree;
 use log::{debug, error, info};
 use metrics_cloudwatch::metrics;
+use serde_json::json;
 use socketioxide::{
     adapter::Room,
-    extract::{SocketRef, TryData},
+    extract::{Extension, SocketRef, State, TryData},
 };
 
-use crate::messages::SubscribeRequest;
+use crate::{messages::SubscribeRequest, state::BroadcastooorState, TopicFilterMap};
 
-pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
+use super::connect::ConnectedUserInfo;
+
+pub fn handle_subscribe(
+    s: SocketRef,
+    all_filters: Extension<Arc<TopicFilterMap>>,
+    user: Extension<Arc<ConnectedUserInfo>>,
+    state: State<Arc<BroadcastooorState>>,
+    msg: TryData<SubscribeRequest>,
+) {
     debug!("received subscribe request with data: {:?}", msg.0);
     let msg: SubscribeRequest = match msg {
         TryData(Ok(msg)) => msg,
@@ -27,6 +37,7 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
             ) {
                 error!("failed to emit serverError: {}", e);
             }
+            state.send_log_with_message(&user, "subscribe", Some(&e.to_string()), 500, None);
             return;
         }
     };
@@ -36,15 +47,8 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
         msg.topic, msg.filter
     );
 
-    //get a reference to filters on the socket
-    let all_filters = s
-        .extensions
-        .get_mut::<DashMap<String, DashMap<String, Option<Node>>>>()
-        .unwrap();
     //get the room filters or create a new one
-    let room_filters = all_filters
-        .entry(msg.topic.clone())
-        .or_insert_with(DashMap::<String, Option<Node>>::new);
+    let room_filters = all_filters.entry(msg.topic.clone()).or_default();
 
     //add filter for the room
     if let Some(filter) = msg.filter.clone() {
@@ -58,6 +62,16 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
                 if let Err(e) = s.emit("serverError", format!("subscribe error: {}", e)) {
                     error!("failed to emit serverError: {}", e);
                 }
+                state.send_log_with_message(
+                    &user,
+                    "subscribe",
+                    Some(&json!({
+                        "error": "failed to parse filter expression",
+                        "message": msg,
+                    })),
+                    500,
+                    None,
+                );
                 return;
             }
         }
@@ -81,11 +95,16 @@ pub fn handle_subscribe(s: SocketRef, msg: TryData<SubscribeRequest>) {
         "subscribed",
         [(
             msg.topic.clone(),
-            msg.filter.map(|f| f.id).unwrap_or_default(),
+            msg.filter
+                .as_ref()
+                .map(|f| f.id.clone())
+                .unwrap_or_default(),
         )],
     ) {
         error!("failed to emit subscribed: {}", e);
     }
+
+    state.send_log_with_message(&user, "subscribe", Some(&msg), 200, None);
 
     //metrics
     {

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use dashmap::DashMap;
 use evalexpr::Node;
 use futures_util::StreamExt;
@@ -10,7 +12,7 @@ use socketioxide::{extract::SocketRef, socket::Socket, SocketIo};
 use step_ingestooor_sdk::schema::{Schema, SchemaTrait};
 use tokio::task;
 
-use crate::{messages::SchemaMessage, SCHEMA_SOCKETIO_PATH};
+use crate::{messages::SchemaMessage, TopicFilterMap, SCHEMA_SOCKETIO_PATH};
 
 pub const RECV_SCHEMA_EVENT_NAME: &str = "receivedSchema";
 
@@ -91,10 +93,7 @@ fn handle_topic(sockets_for_eval: Vec<SocketRef>, topic: &str, schema: &Schema) 
     //because of expr evaluation, we need to manually loop the sockets
     for socket in sockets_for_eval {
         //safe to unwrap, is always created in the subscribe handler
-        let all_filters = socket
-            .extensions
-            .get::<DashMap<String, DashMap<String, Option<Node>>>>()
-            .unwrap();
+        let all_filters = socket.extensions.get::<Arc<TopicFilterMap>>().unwrap();
 
         handle_socket(schema, topic, &socket, &all_filters, &context);
     }

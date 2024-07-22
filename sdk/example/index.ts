@@ -1,7 +1,8 @@
 import { exit } from "process";
 import { StepDataSchemaBroadcastooor } from "../dist/index.mjs"
 
-//creating the connection only requires the url of the server, with or without the namespace is fine
+//creating the connection only requires the url of the server without the namespace 
+//optionally, this can also take an auth token, which is a jwt retrieved from the api login endpoint
 const b = new StepDataSchemaBroadcastooor("http://localhost:3000");
 
 //theres several state events that can be listened to

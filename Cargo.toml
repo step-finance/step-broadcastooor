@@ -1,10 +1,16 @@
 [package]
 name = "step-broadcastooor"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Dana <dana@step.finance>"]
 repository = "https://github.com/step-finance/step-broadcastooor"
 homepage = "https://step.finance/"
 edition = "2021"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
 
 [dependencies]
 dotenv = "0.15.0"
@@ -16,13 +22,18 @@ serde_json = "1.0.108"
 serde = "1.0.193"
 axum = "0.7.4"
 http = "1.1.0"
-evalexpr = { version = "11.3.0", features = [] }
 dashmap = "5.5.3"
+hmac = "0.12.1"
+sha2 = "0.10.8"
+jwt = "0.16.0"
+serde_derive = "1.0.204"
+chrono = "0.4.38"
+tokio-postgres = { version = "0.7.10", features = ["with-serde_json-1"] }
+evalexpr = { version = "11.3.0", features = [] }
 tower-http = { version = "0.5.2", features = ["cors"] }
-socketioxide = { version = "0.11.0", features = [
+socketioxide = { version = "0.14.0", features = [
     "extensions",
     "state",
-    "tracing",
 ] }
 clap = { version = "3.2.23", features = ["derive", "env"] }
 tokio = { version = "1.35.1", features = [
@@ -37,20 +48,20 @@ ts-rs = { version = "8.1", features = ["chrono-impl"] }
 metrics_cloudwatch = "2.0.1"
 
 step-common-rust = { git = "ssh://git@github.com/step-finance/step-common-rust", tag = "0.1.2", version = "0.1.2" }
-step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "f759c9db793962e2c7a483bc866fea7a0e209db6" }
-step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "f759c9db793962e2c7a483bc866fea7a0e209db6" }
+step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "24482218db106a49d8185ca7d14d2b091a50930c" }
+step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "24482218db106a49d8185ca7d14d2b091a50930c" }
 
 # step-common-rust = { path = "../step-common-rust" }
 # step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
 # step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
 
-indexer_rabbitmq = { package = "holaplex-indexer-rabbitmq", git = "https://github.com/step-finance/indexer-geyser-plugin", rev = "10fdb0ca1cc402ca614dba7cff7e06ef87768f62" }
+indexer_rabbitmq = { package = "holaplex-indexer-rabbitmq", git = "https://github.com/step-finance/indexer-geyser-plugin", rev = "64ba0f813513af987b684e7abdf0452bbb1ba121" }
 
 [patch.crates-io]
-solana-client = { git = 'https://github.com/step-finance/solana.git', rev = "2cfca0222c46c46fce886061b4027f7133170aa0" }
-solana-transaction-status = { git = 'https://github.com/step-finance/solana.git', rev = "2cfca0222c46c46fce886061b4027f7133170aa0" }
-solana-sdk = { git = 'https://github.com/step-finance/solana.git', rev = "2cfca0222c46c46fce886061b4027f7133170aa0" }
-solana-logger = { git = 'https://github.com/step-finance/solana.git', rev = "2cfca0222c46c46fce886061b4027f7133170aa0" }
-solana-program = { git = 'https://github.com/step-finance/solana.git', rev = "2cfca0222c46c46fce886061b4027f7133170aa0" }
-solana-metrics = { git = 'https://github.com/step-finance/solana.git', rev = "2cfca0222c46c46fce886061b4027f7133170aa0" }
-solana-account-decoder = { git = 'https://github.com/step-finance/solana.git', rev = "2cfca0222c46c46fce886061b4027f7133170aa0" }
+solana-client = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
+solana-transaction-status = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
+solana-sdk = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
+solana-logger = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
+solana-program = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
+solana-metrics = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
+solana-account-decoder = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }

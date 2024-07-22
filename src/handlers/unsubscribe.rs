@@ -1,12 +1,21 @@
-use dashmap::DashMap;
-use evalexpr::Node;
+use std::sync::Arc;
+
 use log::{debug, error, info, warn};
 use metrics_cloudwatch::metrics;
-use socketioxide::extract::{SocketRef, TryData};
+use serde_json::json;
+use socketioxide::extract::{Extension, SocketRef, State, TryData};
 
-use crate::messages::UnsubscribeRequest;
+use crate::{messages::UnsubscribeRequest, state::BroadcastooorState, TopicFilterMap};
 
-pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
+use super::connect::ConnectedUserInfo;
+
+pub fn handle_unsubscribe(
+    s: SocketRef,
+    all_filters: Extension<Arc<TopicFilterMap>>,
+    user: Extension<Arc<ConnectedUserInfo>>,
+    state: State<Arc<BroadcastooorState>>,
+    msg: TryData<UnsubscribeRequest>,
+) {
     let msg: UnsubscribeRequest = match msg {
         TryData(Ok(msg)) => msg,
         TryData(Err(e)) => {
@@ -23,6 +32,7 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
             ) {
                 error!("failed to emit serverError: {}", e);
             }
+            state.send_log_with_message(&user, "unsubscribe", Some(&e.to_string()), 500, None);
             return;
         }
     };
@@ -31,12 +41,6 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
         "received unsubscribe for {} filter {:?}",
         msg.topic, msg.filter_id
     );
-
-    //get a reference to filters on the socket
-    let all_filters = s
-        .extensions
-        .get_mut::<DashMap<String, DashMap<String, Option<Node>>>>()
-        .unwrap();
 
     let mut empty_room = false;
     //grab the room filters
@@ -52,6 +56,16 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
                 if let Err(e) = s.emit("serverError", "filter not found") {
                     error!("failed to emit serverError: {}", e);
                 }
+                state.send_log_with_message(
+                    &user,
+                    "unsubscribe",
+                    Some(&json!({
+                        "error": "filter not found",
+                        "message": msg,
+                    })),
+                    500,
+                    None,
+                );
                 return;
             }
             debug!("unsubscribed from {} filter {}", msg.topic, filter_id);
@@ -61,6 +75,16 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
                 if let Err(e) = s.emit("serverError", "not subscribed genericly to that topic") {
                     error!("failed to emit serverError: {}", e);
                 }
+                state.send_log_with_message(
+                    &user,
+                    "unsubscribe",
+                    Some(&json!({
+                        "error": "not subscribed genericly to that topic",
+                        "message": msg,
+                    })),
+                    500,
+                    None,
+                );
                 return;
             }
             debug!("unsubscribed from {}", msg.topic);
@@ -88,10 +112,12 @@ pub fn handle_unsubscribe(s: SocketRef, msg: TryData<UnsubscribeRequest>) {
     //notify the client that they have unsubscribed
     if let Err(e) = s.emit(
         "unsubscribed",
-        [(msg.topic.clone(), msg.filter_id.unwrap_or_default())],
+        [(msg.topic.clone(), msg.filter_id.as_ref())],
     ) {
         error!("failed to emit unsubscribed: {}", e);
     }
+
+    state.send_log_with_message(&user, "unsubscribe", Some(&msg), 200, None);
 
     //metrics
     {
