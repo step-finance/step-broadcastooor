@@ -46,22 +46,30 @@ tokio = { version = "1.35.1", features = [
 ] }
 ts-rs = { version = "8.1", features = ["chrono-impl"] }
 metrics_cloudwatch = "2.0.1"
+solana-zk-token-sdk = "=1.18.20"
 
 step-common-rust = { git = "ssh://git@github.com/step-finance/step-common-rust", tag = "0.1.2", version = "0.1.2" }
-step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "59083630d8e3b8fe594dadd918e259e1e079cc6b" }
-step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "59083630d8e3b8fe594dadd918e259e1e079cc6b" }
+step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "4d41bb962cbc40155092b67f53557020e55da62b" }
+step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "4d41bb962cbc40155092b67f53557020e55da62b" }
 
 # step-common-rust = { path = "../step-common-rust" }
 # step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
 # step-ingestooor-sdk = { path = "../step-ingestooor/crates/sdk" }
 
-indexer_rabbitmq = { package = "holaplex-indexer-rabbitmq", git = "https://github.com/step-finance/indexer-geyser-plugin", rev = "64ba0f813513af987b684e7abdf0452bbb1ba121" }
+indexer_rabbitmq = { package = "holaplex-indexer-rabbitmq", git = "https://github.com/step-finance/indexer-geyser-plugin", rev = "28ea54d9b00f28230fe1e04c5a5c782d42355613" }
 
 [patch.crates-io]
-solana-client = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
-solana-transaction-status = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
-solana-sdk = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
-solana-logger = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
-solana-program = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
-solana-metrics = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
-solana-account-decoder = { git = 'https://github.com/step-finance/solana.git', rev = "ee3d0d65501e7fd3b7dfc1543e381b46b7357a2c" }
+solana-cost-model = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-merkle-tree = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-ledger = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-storage-bigtable = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-storage-proto = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-runtime = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-accounts-db = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-client = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-transaction-status = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-sdk = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-logger = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-program = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-metrics = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
+solana-account-decoder = { git = 'https://github.com/step-finance/solana.git', rev = "04b3633afd99c5d02f0d2e844d29ad766d6f1ba8" }
