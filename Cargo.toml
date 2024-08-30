@@ -49,8 +49,8 @@ metrics_cloudwatch = "2.0.1"
 solana-zk-token-sdk = "=1.18.20"
 
 step-common-rust = { git = "ssh://git@github.com/step-finance/step-common-rust", tag = "0.1.2", version = "0.1.2" }
-step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "4d41bb962cbc40155092b67f53557020e55da62b" }
-step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "4d41bb962cbc40155092b67f53557020e55da62b" }
+step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "36a8482c87c01cb52b530b1272a5bed83188e1c3" }
+step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "36a8482c87c01cb52b530b1272a5bed83188e1c3" }
 
 # step-common-rust = { path = "../step-common-rust" }
 # step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
