@@ -55,7 +55,11 @@ pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io
 fn handle_incoming_schemas(data: Vec<u8>, socket_io: SocketIo) {
     trace!("got message: {}", String::from_utf8(data.to_vec()).unwrap());
 
-    let Ok(schemas): Result<Vec<Schema>, _> = serde_json::from_slice(&data) else {
+    let schema_strings = data.split(|a| *a == b'\n');
+    let Ok(schemas) = schema_strings
+        .map(serde_json::from_slice)
+        .collect::<Result<Vec<Schema>, _>>()
+    else {
         error!("failed to parse messages, wrong schema version is likely!! we're losing messages until this is fixed!");
         return;
     };
