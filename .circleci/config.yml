@@ -20,9 +20,9 @@ jobs:
       - restore_cache:
           keys:
             - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - run:
-          name: "Install extra deps"
-          command: "sudo apt-get update && sudo apt-get install -y clang"
+      # - run:
+      #     name: "Install extra deps"
+      #     command: "sudo apt-get update && sudo apt-get install -y clang"
       - run:
           name: "Install rustfmt"
           command: "rustup component add rustfmt && rustup component add clippy"
@@ -51,9 +51,9 @@ jobs:
       - restore_cache:
           keys:
             - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - run:
-          name: "Install extra deps"
-          command: "apt-get update && apt-get install -y clang"
+      # - run:
+      #     name: "Install extra deps"
+      #     command: "apt-get update && apt-get install -y clang"
       - add_ssh_keys:
           fingerprints:
             - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
@@ -80,9 +80,9 @@ jobs:
       - restore_cache:
           keys:
             - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - run:
-          name: "Install extra deps"
-          command: "apt-get update && apt-get install -y clang"
+      # - run:
+      #     name: "Install extra deps"
+      #     command: "apt-get update && apt-get install -y clang"
       - add_ssh_keys:
           fingerprints:
             - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
@@ -104,9 +104,9 @@ jobs:
       - restore_cache:
           keys:
             - v1-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - run:
-          name: "Install extra deps"
-          command: "apt-get update && apt-get install -y clang"
+      # - run:
+      #     name: "Install extra deps"
+      #     command: "apt-get update && apt-get install -y clang"
       # Using the Cargo.lock file to get the version of the Ingestooor SDK
       # Check if the version is already published, and if not, update the version in package.json
       - run:
