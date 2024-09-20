@@ -22,7 +22,7 @@ jobs:
             - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: "Install extra deps"
-          command: "apt-get update && apt-get install -y clang"
+          command: "sudo apt-get update && sudo apt-get install -y clang"
       - run:
           name: "Install rustfmt"
           command: "rustup component add rustfmt && rustup component add clippy"
