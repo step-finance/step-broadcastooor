@@ -22,4 +22,3 @@ jobs:
           github_action.auto_review: "true" # Enable auto review
           github_action.auto_describe: "false" # Enable auto describe
           github_action.auto_improve: "false" # Disable auto improve
-          github_action.model: "gpt-3.5-turbo-16k"
