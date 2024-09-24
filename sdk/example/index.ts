@@ -28,8 +28,8 @@ b.onServerError((error) => {
 b.onReceivedSchema((message) => {
   //the message is a SchemaMessage object, which has a schema property that is the schema object
   //you can pull out the type using the in operator
-  if ("SlotStats" in message.schema) {
-    console.log(`received slot ${message.schema.SlotStats.slot}`);
+  if (message.schema.t == "SlotStats") {
+    console.log(`received slot ${message.schema.slot}`);
   }
 });
 

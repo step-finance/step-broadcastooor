@@ -12,7 +12,6 @@ export * from "./types/MintUnderlyingSchema";
 export * from "./types/NftActivitySchema";
 export * from "./types/OpenOrderUStateSchema";
 export * from "./types/OrderBookGStateSchema";
-export * from "./types/OrderBookSchemaEntry";
 export * from "./types/PoolPart";
 export * from "./types/SlotStatsSchema";
 export * from "./types/SolBalanceSchema";
