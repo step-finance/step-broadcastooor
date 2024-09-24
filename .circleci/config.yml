@@ -21,6 +21,9 @@ jobs:
           keys:
             - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
+          name: "Install prereqs"
+          command: "apt-get update && apt-get install -y pkg-config libssl-dev git openssh-client libclang-dev"
+      - run:
           name: "Install rustfmt"
           command: "rustup component add rustfmt && rustup component add clippy"
       - run:
