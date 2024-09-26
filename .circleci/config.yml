@@ -106,7 +106,11 @@ jobs:
       - run:
           name: "Root folder cache fix move"
           command: |
-            mv /root/project/sdk /home/circleci/project/sdk
+            ls /root/project
+            ls /root/project/sdk
+            ls /root/project/sdk/src
+            ls /root/project/sdk/src/types
+            mv /root/project/sdk/src/types /home/circleci/project/sdk/src/types
             ls /home/circleci/project
             ls /home/circleci/project/sdk
             ls /home/circleci/project/sdk/src
