@@ -106,15 +106,7 @@ jobs:
       - run:
           name: "Root folder cache fix move"
           command: |
-            ls /root/project
-            ls /root/project/sdk
-            ls /root/project/sdk/src
-            ls /root/project/sdk/src/types
             mv /root/project/sdk/src/types /home/circleci/project/sdk/src/types
-            ls /home/circleci/project
-            ls /home/circleci/project/sdk
-            ls /home/circleci/project/sdk/src
-            ls /home/circleci/project/sdk/src/types
       # Using the Cargo.lock file to get the version of the Ingestooor SDK
       # Check if the version is already published, and if not, update the version in package.json
       - run:
