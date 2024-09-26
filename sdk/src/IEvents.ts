@@ -1,15 +1,15 @@
-import { SchemaMessage } from "./types/SchemaMessage";
+import { DoootMessage } from "./types/DoootMessage";
 import { SubscribeRequest } from "./types/SubscribeRequest";
 import { UnsubscribeRequest } from "./types/UnsubscribeRequest";
 
-export interface DataSchemaListenEvents {
+export interface DataDoootListenEvents {
   subscribed: (topic: string) => void;
   unsubscribed: (topic: string) => void;
   serverError: (error: string) => void;
-  receivedSchema: (message: SchemaMessage) => void;
+  receivedDooot: (message: DoootMessage) => void;
 }
 
-export interface DataSchemaEmitEvents {
+export interface DataDoootEmitEvents {
   subscribe: (req: SubscribeRequest) => void;
   unsubscribe: (req: UnsubscribeRequest) => void;
 }
