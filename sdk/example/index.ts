@@ -1,9 +1,9 @@
 import { exit } from "process";
-import { StepDataSchemaBroadcastooor } from "../dist/index.mjs"
+import { StepDataDoootBroadcastooor } from "../dist/index.mjs"
 
 //creating the connection only requires the url of the server without the namespace 
 //optionally, this can also take an auth token, which is a jwt retrieved from the api login endpoint
-const b = new StepDataSchemaBroadcastooor("http://localhost:3000");
+const b = new StepDataDoootBroadcastooor("http://localhost:3000");
 
 //theres several state events that can be listened to
 b.onConnect(() => {
@@ -24,12 +24,12 @@ b.onServerError((error) => {
   console.error(`server error: ${error}`);
 });
 
-//the receivedSchema event is where the data is received
-b.onReceivedSchema((message) => {
-  //the message is a SchemaMessage object, which has a schema property that is the schema object
+//the receivedDooot event is where the data is received
+b.onReceivedDooot((message) => {
+  //the message is a DoootMessage object, which has a dooot property that is the dooot object
   //you can pull out the type using the in operator
-  if (message.schema.t == "SlotStats") {
-    console.log(`received slot ${message.schema.slot}`);
+  if (message.dooot.t == "SlotStats") {
+    console.log(`received slot ${message.dooot.slot}`);
   }
 });
 

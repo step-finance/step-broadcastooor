@@ -1,16 +1,16 @@
 import { Socket, io } from "socket.io-client";
-import { DataSchemaEmitEvents, DataSchemaListenEvents } from "./IEvents";
-import { SchemaMessage } from "./types/SchemaMessage";
+import { DataDoootEmitEvents, DataDoootListenEvents } from "./IEvents";
+import { DoootMessage } from "./types/DoootMessage";
 
 export * from "./IEvents";
 export * from "./AllTypes";
 
-export type SocketIOClient = Socket<DataSchemaListenEvents, DataSchemaEmitEvents>;
+export type SocketIOClient = Socket<DataDoootListenEvents, DataDoootEmitEvents>;
 
-export class StepDataSchemaBroadcastooor {
+export class StepDataDoootBroadcastooor {
   private socket: SocketIOClient;
   constructor(url: string, token: string | undefined = undefined) {
-    this.socket = io(url + "/data_schema", {auth:{token}});
+    this.socket = io(url + "/dooots", {auth:{token}});
   }
 
   onConnect(listener: () => void | Promise<void>): this {
@@ -39,8 +39,8 @@ export class StepDataSchemaBroadcastooor {
     return this;
   }
 
-  onReceivedSchema(listener: (message: SchemaMessage) => void | Promise<void>): this {
-    this.socket.on("receivedSchema", listener);
+  onReceivedDooot(listener: (message: DoootMessage) => void | Promise<void>): this {
+    this.socket.on("receivedDooot", listener);
     return this;
   }
 

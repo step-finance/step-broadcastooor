@@ -2,21 +2,21 @@
 //!
 //! Requires environment variables or arguments as defined in the [BroadcastooorArgs] struct.
 //!
-//! The SocketIO path is `/data_schema` and supported messages are:
+//! The SocketIO path is `/dooots` and supported messages are:
 //! - `subscribe`: Subscribe to a topic, payload should be [SubscribeRequest]
 //! - `unsubscribe`: Unsubscribe from a topic, payload should be [UnsubscribeRequest]
 //!
 //! Events that are emitted:
-//! - `schema`: A topic subscribed to emits a schema, payload is [SchemaMessage]
+//! - `dooot`: A topic subscribed to emits a dooot, payload is [DoootMessage]
 //! - `subscribed`: Successfully subscribed to a topic, payload is the topic name
 //! - `unsubscribed`: Successfully unsubscribed from a topic, payload is the topic name
 //! - `error`: An error occurred, payload is a string describing the error
 //!
-//! The format for topics is `<schema_name>.<field name>.<field value>`. For instance,
-//! a `SolTransfer` schema with a `source` field of `123` would have a topic of `SolTransfer.source.123`.
-//! Some schemas are also published as general topics as just `<schema_name>`.
+//! The format for topics is `<dooot_name>.<field name>.<field value>`. For instance,
+//! a `SolTransfer` dooot with a `source` field of `123` would have a topic of `SolTransfer.source.123`.
+//! Some dooots are also published as general topics as just `<dooot_name>`.
 //!
-//! For specific schemas, and their fields exposed as topics, see the [step_ingestooor_sdk::schema] module.
+//! For specific dooots, and their fields exposed as topics, see the [step_ingestooor_sdk::dooot] module.
 use std::{future::IntoFuture, sync::Arc};
 
 use anyhow::Result;
@@ -50,8 +50,8 @@ mod state;
 
 type TopicFilterMap = DashMap<String, DashMap<String, Option<Node>>>;
 
-/// The path to the socket.io namespace that handles schema subscriptions
-pub const SCHEMA_SOCKETIO_PATH: &str = "/data_schema";
+/// The path to the socket.io namespace that handles dooot subscriptions
+pub const SCHEMA_SOCKETIO_PATH: &str = "/dooots";
 /// the path for a healthcheck endpoint
 pub const HEATHCHECK_PATH: &str = "/healthcheck";
 /// The address and port to bind the socket server to
@@ -214,7 +214,7 @@ async fn main() -> Result<()> {
         //cors
         .layer(cors_layer);
 
-    //create a thread that uses rabbit to listen and publish schemas
+    //create a thread that uses rabbit to listen and publish dooots
     let rabbit_thread = tokio::spawn(receiver::run_rabbit_thread(
         channel,
         queue,

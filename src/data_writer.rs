@@ -48,7 +48,7 @@ impl ApiLog {
                     None
                 }
             }),
-            endpoint: "/data_schema".to_string(),
+            endpoint: "/dooots".to_string(),
             query_params: None,
             start_time: now,
             end_time: now,
