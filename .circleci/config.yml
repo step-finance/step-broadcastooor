@@ -103,6 +103,8 @@ jobs:
       - run:
           name: "Check version"
           command: |
+            echo $PWD
+            ls /root/project -la
             DOOOT_VERSION_LINE=`sed -e '1,/name = "step-ingestooor-sdk"/d' ./Cargo.lock`
             DOOOT_VERSION_LINE=`echo $DOOOT_VERSION_LINE | head -n 1 | xargs -n 1 printf "%s,"`
             IFS=',' read -r -a DOOOT_VERSION_ARRAY \<<< "${DOOOT_VERSION_LINE}"
