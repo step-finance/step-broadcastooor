@@ -9,12 +9,12 @@ use indexer_rabbitmq::lapin::{
 };
 use log::{debug, error, trace, warn};
 use socketioxide::{extract::SocketRef, socket::Socket, SocketIo};
-use step_ingestooor_sdk::schema::{Schema, SchemaTrait};
+use step_ingestooor_sdk::dooot::{Dooot, DoootTrait};
 use tokio::task;
 
-use crate::{messages::SchemaMessage, TopicFilterMap, SCHEMA_SOCKETIO_PATH};
+use crate::{messages::DoootMessage, TopicFilterMap, SCHEMA_SOCKETIO_PATH};
 
-pub const RECV_SCHEMA_EVENT_NAME: &str = "receivedSchema";
+pub const RECV_SCHEMA_EVENT_NAME: &str = "receivedDooot";
 
 pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: SocketIo) {
     //set the prefetch on the channel
@@ -44,7 +44,7 @@ pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io
         if let Ok(delivery) = message_result {
             let io = io.clone();
             task::spawn(async move {
-                handle_incoming_schemas(delivery.data, io);
+                handle_incoming_dooots(delivery.data, io);
             });
         } else {
             error!("failed to get message");
@@ -52,24 +52,24 @@ pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io
     }
 }
 
-fn handle_incoming_schemas(data: Vec<u8>, socket_io: SocketIo) {
+fn handle_incoming_dooots(data: Vec<u8>, socket_io: SocketIo) {
     trace!("got message: {}", String::from_utf8(data.to_vec()).unwrap());
 
-    let schema_strings = data.split(|a| *a == b'\n');
-    let Ok(schemas) = schema_strings
+    let dooot_strings = data.split(|a| *a == b'\n');
+    let Ok(dooots) = dooot_strings
         .map(serde_json::from_slice)
-        .collect::<Result<Vec<Schema>, _>>()
+        .collect::<Result<Vec<Dooot>, _>>()
     else {
-        error!("failed to parse messages, wrong schema version is likely!! we're losing messages until this is fixed!");
+        error!("failed to parse messages, wrong dooot version is likely!! we're losing messages until this is fixed!");
         return;
     };
 
-    for schema in schemas {
-        let topics = schema.get_topics();
+    for dooot in dooots {
+        let topics = dooot.get_topics();
 
         trace!(
-            "publishing schema {} to topics: {:?}",
-            schema.get_schema_name(),
+            "publishing dooot {} to topics: {:?}",
+            dooot.get_dooot_name(),
             topics
         );
 
@@ -81,12 +81,12 @@ fn handle_incoming_schemas(data: Vec<u8>, socket_io: SocketIo) {
                 .sockets()
                 .unwrap();
 
-            handle_topic(sockets_for_eval, topic, &schema);
+            handle_topic(sockets_for_eval, topic, &dooot);
         }
     }
 }
 
-fn handle_topic(sockets_for_eval: Vec<SocketRef>, topic: &str, schema: &Schema) {
+fn handle_topic(sockets_for_eval: Vec<SocketRef>, topic: &str, dooot: &Dooot) {
     let cnt = sockets_for_eval.len();
     if cnt > 0 {
         debug!("got {} sockets for eval", cnt);
@@ -95,19 +95,19 @@ fn handle_topic(sockets_for_eval: Vec<SocketRef>, topic: &str, schema: &Schema) 
         return;
     }
 
-    let context = schema.get_expr_context();
+    let context = dooot.get_expr_context();
 
     //because of expr evaluation, we need to manually loop the sockets
     for socket in sockets_for_eval {
         //safe to unwrap, is always created in the subscribe handler
         let all_filters = socket.extensions.get::<Arc<TopicFilterMap>>().unwrap();
 
-        handle_socket(schema, topic, &socket, &all_filters, &context);
+        handle_socket(dooot, topic, &socket, &all_filters, &context);
     }
 }
 
 fn handle_socket(
-    schema: &Schema,
+    dooot: &Dooot,
     topic: &str,
     socket: &Socket,
     all_filters: &DashMap<String, DashMap<String, Option<Node>>>,
@@ -119,7 +119,7 @@ fn handle_socket(
         for room_filter in room_filters.iter() {
             if let Some(filter) = room_filter.value().as_ref() {
                 let filter_id = room_filter.key();
-                if !handle_filter(schema, topic, socket, filter_id, filter, context) {
+                if !handle_filter(dooot, topic, socket, filter_id, filter, context) {
                     //this filter is erroring, remove it
                     if bad_filters.is_none() {
                         bad_filters = Some(Vec::new());
@@ -129,11 +129,11 @@ fn handle_socket(
                     }
                 }
             } else {
-                //this is a full room subscription, send the schema to the client
-                let message = SchemaMessage {
+                //this is a full room subscription, send the dooot to the client
+                let message = DoootMessage {
                     topic: topic.to_owned(),
                     filter_id: None,
-                    schema: schema.clone(),
+                    dooot: dooot.clone(),
                 };
 
                 socket.emit(RECV_SCHEMA_EVENT_NAME, message).ok();
@@ -179,7 +179,7 @@ fn handle_socket(
 }
 
 fn handle_filter(
-    schema: &Schema,
+    dooot: &Dooot,
     topic: &str,
     socket: &Socket,
     filter_id: &String,
@@ -190,10 +190,10 @@ fn handle_filter(
     debug!("found room filter {}", filter.to_string());
     match filter.eval_boolean_with_context(context) {
         Ok(true) => {
-            let message = SchemaMessage {
+            let message = DoootMessage {
                 topic: topic.to_owned(),
                 filter_id: Some(filter_id),
-                schema: schema.clone(),
+                dooot: dooot.clone(),
             };
             debug!("filter {} evaluated to true", filter_id);
             socket.emit(RECV_SCHEMA_EVENT_NAME, message).ok();
