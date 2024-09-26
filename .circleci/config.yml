@@ -95,16 +95,23 @@ jobs:
       - image: cimg/rust:1.77-node
     steps:
       - checkout
+      - run:
+          name: "Root folder cache fix prep"
+          command: |
+            sudo chmod 777 /root
+            mkdir /root/project
       - restore_cache:
           keys:
             - v1-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: "Root folder cache fix move"
+          command: |
+            mv /root/project/sdk /home/circleci/project/sdk
       # Using the Cargo.lock file to get the version of the Ingestooor SDK
       # Check if the version is already published, and if not, update the version in package.json
       - run:
           name: "Check version"
           command: |
-            echo $PWD
-            ls /root/project -la
             DOOOT_VERSION_LINE=`sed -e '1,/name = "step-ingestooor-sdk"/d' ./Cargo.lock`
             DOOOT_VERSION_LINE=`echo $DOOOT_VERSION_LINE | head -n 1 | xargs -n 1 printf "%s,"`
             IFS=',' read -r -a DOOOT_VERSION_ARRAY \<<< "${DOOOT_VERSION_LINE}"
