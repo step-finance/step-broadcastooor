@@ -7848,8 +7848,8 @@ dependencies = [
 
 [[package]]
 name = "step-common-rust"
-version = "0.3.1"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc#7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc"
+version = "0.4.0"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=1d2585c9a6b9494b536e088eb4dd35587515a737#1d2585c9a6b9494b536e088eb4dd35587515a737"
 dependencies = [
  "anyhow",
  "chrono",
@@ -7868,8 +7868,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-derive"
-version = "0.3.1"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc#7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc"
+version = "0.4.0"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=1d2585c9a6b9494b536e088eb4dd35587515a737#1d2585c9a6b9494b536e088eb4dd35587515a737"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7879,8 +7879,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-engine"
-version = "0.3.1"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc#7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc"
+version = "0.4.0"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=1d2585c9a6b9494b536e088eb4dd35587515a737#1d2585c9a6b9494b536e088eb4dd35587515a737"
 dependencies = [
  "anyhow",
  "bincode",
@@ -7925,8 +7925,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-idl-gens"
-version = "0.3.1"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc#7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc"
+version = "0.4.0"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=1d2585c9a6b9494b536e088eb4dd35587515a737#1d2585c9a6b9494b536e088eb4dd35587515a737"
 dependencies = [
  "anchor-gen",
  "anchor-lang",
@@ -7939,8 +7939,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-parsers"
-version = "0.3.1"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc#7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc"
+version = "0.4.0"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=1d2585c9a6b9494b536e088eb4dd35587515a737#1d2585c9a6b9494b536e088eb4dd35587515a737"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7953,6 +7953,7 @@ dependencies = [
  "deadpool-postgres",
  "enum_dispatch",
  "fixed",
+ "itertools 0.12.1",
  "log",
  "mpl-token-metadata",
  "num_enum 0.7.2",
@@ -7978,8 +7979,8 @@ dependencies = [
 
 [[package]]
 name = "step-ingestooor-sdk"
-version = "0.3.1"
-source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc#7c2ff8d15bb41d033b0c05c85fd8a197263f9dbc"
+version = "0.4.0"
+source = "git+ssh://git@github.com/step-finance/step-ingestooor?rev=1d2585c9a6b9494b536e088eb4dd35587515a737#1d2585c9a6b9494b536e088eb4dd35587515a737"
 dependencies = [
  "anyhow",
  "async-trait",

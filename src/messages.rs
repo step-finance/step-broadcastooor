@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
-use step_ingestooor_sdk::schema::Schema;
+use step_ingestooor_sdk::dooot::Dooot;
 use ts_rs::TS;
 
-/// A filter allows the server to filter out schemas based on expressions.
+/// A filter allows the server to filter out dooots based on expressions.
 #[derive(Serialize, Deserialize, Clone, Debug, TS)]
 #[ts(export)]
 pub struct Filter {
@@ -10,7 +10,7 @@ pub struct Filter {
     /// If two filters have the same filter identifier the behavior is undefined. Don't do that.
     pub id: String,
     /// The expression to filter on.
-    /// The schema's fields of types `i*`, `u*`, `f*`, `String`, `Vec<T>` and `bool` are available in
+    /// The dooot's fields of types `i*`, `u*`, `f*`, `String`, `Vec<T>` and `bool` are available in
     /// the expression as their field names. Example: `price > 1000 && price < 2000`.
     /// `Option<T>` unwraps to the value or `()` aka `Empty`.
     /// Deep combinations like `Option<Vec<Option<String>>>` are untested and may not work.
@@ -22,7 +22,7 @@ pub struct Filter {
 #[derive(Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
 pub struct SubscribeRequest {
-    /// The topic to subscribe to.  See [step_ingestooor_sdk::schema]
+    /// The topic to subscribe to.  See [step_ingestooor_sdk::dooot]
     pub topic: String,
     /// An optional filter to apply to the topic. See [Filter]
     #[ts(optional)]
@@ -39,15 +39,15 @@ pub struct UnsubscribeRequest {
     pub filter_id: Option<String>,
 }
 
-/// A message with a schema returned to the client
+/// A message with a dooot returned to the client
 #[derive(Serialize, Debug, TS)]
 #[ts(export)]
-pub struct SchemaMessage<'a> {
+pub struct DoootMessage<'a> {
     /// The topic that triggered the message to be sent.
     pub topic: String,
     /// The filter identifier, sent on subscription setup in [Filter], which triggered the message to be sent.
     #[ts(optional)]
     pub filter_id: Option<&'a String>,
     /// The message payload
-    pub schema: Schema,
+    pub dooot: Dooot,
 }
