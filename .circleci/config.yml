@@ -164,8 +164,8 @@ workflows:
 
       # Publish SDK to NPM
       - publish-sdk:
-          # requires:
-          #   - test
+          requires:
+            - test
           filters:
             branches:
               only:
