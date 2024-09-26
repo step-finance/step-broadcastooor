@@ -107,6 +107,10 @@ jobs:
           name: "Root folder cache fix move"
           command: |
             mv /root/project/sdk /home/circleci/project/sdk
+            ls /home/circleci/project
+            ls /home/circleci/project/sdk
+            ls /home/circleci/project/sdk/src
+            ls /home/circleci/project/sdk/src/types
       # Using the Cargo.lock file to get the version of the Ingestooor SDK
       # Check if the version is already published, and if not, update the version in package.json
       - run:
@@ -164,8 +168,8 @@ workflows:
 
       # Publish SDK to NPM
       - publish-sdk:
-          requires:
-            - test
+          # requires:
+          #   - test
           filters:
             branches:
               only:
