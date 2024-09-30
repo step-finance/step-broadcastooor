@@ -95,28 +95,37 @@ jobs:
       - image: cimg/rust:1.77-node
     steps:
       - checkout
+      - run:
+          name: "Root folder cache fix prep"
+          command: |
+            sudo chmod 777 /root
+            mkdir /root/project
       - restore_cache:
           keys:
             - v1-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: "Root folder cache fix move"
+          command: |
+            mv /root/project/sdk/src/types /home/circleci/project/sdk/src/types
       # Using the Cargo.lock file to get the version of the Ingestooor SDK
       # Check if the version is already published, and if not, update the version in package.json
       - run:
           name: "Check version"
           command: |
-            SCHEMA_VERSION_LINE=`sed -e '1,/name = "step-ingestooor-sdk"/d' ./Cargo.lock`
-            SCHEMA_VERSION_LINE=`echo $SCHEMA_VERSION_LINE | head -n 1 | xargs -n 1 printf "%s,"`
-            IFS=',' read -r -a SCHEMA_VERSION_ARRAY \<<< "${SCHEMA_VERSION_LINE}"
-            SCHEMA_VERSION=${SCHEMA_VERSION_ARRAY[2]}
-            echo "Ingestooor Schema Version: ${SCHEMA_VERSION}"
+            DOOOT_VERSION_LINE=`sed -e '1,/name = "step-ingestooor-sdk"/d' ./Cargo.lock`
+            DOOOT_VERSION_LINE=`echo $DOOOT_VERSION_LINE | head -n 1 | xargs -n 1 printf "%s,"`
+            IFS=',' read -r -a DOOOT_VERSION_ARRAY \<<< "${DOOOT_VERSION_LINE}"
+            DOOOT_VERSION=${DOOOT_VERSION_ARRAY[2]}
+            echo "Ingestooor Dooot Version: ${DOOOT_VERSION}"
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
             PUBLISHED_VERSION=`npm view @stepfinance/broadcastooor version`
             echo "Current NPM Version: ${PUBLISHED_VERSION}"
-            if [ "${SCHEMA_VERSION}" == "${PUBLISHED_VERSION}" ]; then
+            if [ "${DOOOT_VERSION}" == "${PUBLISHED_VERSION}" ]; then
               echo "Version already published"
               circleci-agent step halt
             fi
             cd sdk
-            npm version --no-git-tag-version ${SCHEMA_VERSION}
+            npm version --no-git-tag-version ${DOOOT_VERSION}
       # If didn't halt above: install, build and publish the SDK
       - run:
           name: "NPM Install, Build, Publish"

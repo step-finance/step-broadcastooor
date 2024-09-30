@@ -122,12 +122,12 @@ pub fn handle_unsubscribe(
     //metrics
     {
         let mut topic_parts = msg.topic.split('.');
-        let schema_name = topic_parts.next().unwrap_or_default().to_string();
+        let dooot_name = topic_parts.next().unwrap_or_default().to_string();
         let field_name = topic_parts.next().unwrap_or_default().to_string();
-        // let labels = [("Schema", schema_name), ("Field", field_name)];
+        // let labels = [("Dooot", dooot_name), ("Field", field_name)];
         // metrics::increment_gauge!("TotalSubscriptions", 1.0, &labels);
         metrics::decrement_gauge!("CurrentSubscriptions", 1.0,
-            "Schema" => schema_name,
+            "Dooot" => dooot_name,
             "Field" => field_name,
         );
     }
