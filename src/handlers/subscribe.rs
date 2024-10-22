@@ -17,7 +17,7 @@ pub fn handle_subscribe(
     s: SocketRef,
     all_filters: Extension<Arc<TopicFilterMap>>,
     user: Extension<Arc<ConnectedUserInfo>>,
-    state: State<Arc<BroadcastooorState>>,
+    state: State<BroadcastooorState>,
     msg: TryData<SubscribeRequest>,
 ) {
     debug!("received subscribe request with data: {:?}", msg.0);

@@ -20,6 +20,7 @@
 use std::{future::IntoFuture, sync::Arc, time::Duration};
 
 use anyhow::Result;
+use axum::handler::Handler;
 use clap::Parser;
 use dashmap::DashMap;
 use data_writer::ApiLog;
@@ -248,7 +249,7 @@ async fn main() -> Result<()> {
     );
 
     //socket server setup
-    let (io_layer, io) = SocketIoBuilder::new().build_layer();
+    let (io_layer, io) = SocketIoBuilder::new();
 
     //handle the connection event, which does auth & sets up event listeners
     io.ns(SCHEMA_SOCKETIO_PATH, handle_connect);

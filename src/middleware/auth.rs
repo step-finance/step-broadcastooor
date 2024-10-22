@@ -15,6 +15,7 @@ pub async fn auth_middleware(
     mut req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
+    log::warn!("auth middleware");
     let mut user = ConnectedUserInfo::default();
     if state.no_auth {
         req.extensions_mut().insert(user);
@@ -68,6 +69,7 @@ pub async fn auth_middleware(
     };
 
     // state.send_log_with_message(&user, "auth-fail", None, 200, origin_ref);
+    log::error!("Unauthorized request from {:?}", user);
 
     Err(StatusCode::UNAUTHORIZED)
 }

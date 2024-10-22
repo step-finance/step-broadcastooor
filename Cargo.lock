@@ -2574,6 +2574,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.23.1",
  "tower 0.4.13",
+ "tracing",
 ]
 
 [[package]]
@@ -6357,6 +6358,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tower 0.4.13",
+ "tracing",
 ]
 
 [[package]]

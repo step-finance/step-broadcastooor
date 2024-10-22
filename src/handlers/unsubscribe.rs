@@ -13,7 +13,7 @@ pub fn handle_unsubscribe(
     s: SocketRef,
     all_filters: Extension<Arc<TopicFilterMap>>,
     user: Extension<Arc<ConnectedUserInfo>>,
-    state: State<Arc<BroadcastooorState>>,
+    state: State<BroadcastooorState>,
     msg: TryData<UnsubscribeRequest>,
 ) {
     let msg: UnsubscribeRequest = match msg {

@@ -17,7 +17,7 @@ pub struct ConnectedUserInfo {
     pub claims: Option<claims::UserJWT>,
 }
 
-pub fn handle_connect(s: SocketRef, State(state): State<Arc<BroadcastooorState>>) {
+pub fn handle_connect(s: SocketRef, State(state): State<BroadcastooorState>) {
     // Get the auth data from the request
     let parts = s.req_parts();
     let extensions = &s.extensions;
