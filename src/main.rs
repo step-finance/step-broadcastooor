@@ -67,7 +67,7 @@ pub const SCHEMA_SOCKETIO_PATH: &str = "/dooots";
 /// the path for a healthcheck endpoint
 pub const HEATHCHECK_PATH: &str = "/healthcheck";
 /// the path for a transaction endpoint
-pub const TXN_PATH: &str = "/txn";
+pub const TXN_PATH: &str = "/transaction";
 /// The address and port to bind the socket server to
 pub const BIND_ADDR_PORT: &str = "0.0.0.0:3000";
 
@@ -80,7 +80,7 @@ pub struct BroadcastooorArgs {
 
     /// The exchange to use
     #[clap(long, env)]
-    pub rabbitmq_exchange: String,
+    pub rabbitmq_dooot_exchange: String,
 
     /// The txn exchange to use
     #[clap(long, env)]
@@ -151,9 +151,9 @@ async fn main() -> Result<()> {
         .await?;
         log::debug!("database connection successful");
     }
-    let (tx, rx) = tokio::sync::mpsc::unbounded_channel::<ApiLog>();
+    let (api_log_sender, api_log_receiver) = tokio::sync::mpsc::unbounded_channel::<ApiLog>();
     let db_thread = tokio::spawn(data_writer::create_database_writer_task(
-        rx,
+        api_log_receiver,
         if args.no_db_log {
             None
         } else {
@@ -184,7 +184,7 @@ async fn main() -> Result<()> {
     channel
         .queue_bind(
             queue.name().as_str(),
-            &args.rabbitmq_exchange,
+            &args.rabbitmq_dooot_exchange,
             "#",
             Default::default(),
             Default::default(),
@@ -244,7 +244,7 @@ async fn main() -> Result<()> {
         whitelisted_origins,
         Hmac::new_from_slice(args.jwt_secret.as_bytes())?,
         args.no_auth,
-        tx,
+        api_log_sender,
         Arc::new(txn_tx),
     );
 

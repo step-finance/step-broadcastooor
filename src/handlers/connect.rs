@@ -1,16 +1,17 @@
 use std::sync::Arc;
 
 use metrics_cloudwatch::metrics;
-use socketioxide::extract::{Extension, HttpExtension, SocketRef, State};
+use serde::Serialize;
+use socketioxide::extract::{HttpExtension, SocketRef, State};
 
 use crate::{
-    auth::claims::{self, UserJWT},
+    auth::claims::{self},
     handlers::{subscribe::handle_subscribe, unsubscribe::handle_unsubscribe},
     state::BroadcastooorState,
     TopicFilterMap,
 };
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Serialize)]
 pub struct ConnectedUserInfo {
     pub ip_address: Option<String>,
     pub origin: Option<String>,

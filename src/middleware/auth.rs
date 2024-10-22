@@ -5,6 +5,7 @@ use axum::{
 };
 use http::StatusCode;
 use jwt::VerifyWithKey;
+use serde_json::json;
 
 use crate::{
     auth::claims::UserJWT, handlers::connect::ConnectedUserInfo, state::BroadcastooorState,
@@ -15,7 +16,6 @@ pub async fn auth_middleware(
     mut req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    log::warn!("auth middleware");
     let mut user = ConnectedUserInfo::default();
     if state.no_auth {
         req.extensions_mut().insert(user);
@@ -32,7 +32,7 @@ pub async fn auth_middleware(
     user.ip_address = forwarded_for;
 
     // Check origin
-    let whitelisted_origins = state.whitelisted_origins;
+    let whitelisted_origins = &state.whitelisted_origins;
     let origin = headers.get("Origin").and_then(|v| v.to_str().ok());
     if let Some(origin) = origin {
         user.origin = Some(origin.to_owned());
@@ -68,7 +68,17 @@ pub async fn auth_middleware(
         };
     };
 
-    // state.send_log_with_message(&user, "auth-fail", None, 200, origin_ref);
+    state.send_log_with_message(
+        &user,
+        "auth-fail",
+        Some(&json!({
+            "error": "Unauthorized",
+            "message": "Unauthorized request from user",
+            "user": user,
+        })),
+        200,
+        user.origin.clone(),
+    );
     log::error!("Unauthorized request from {:?}", user);
 
     Err(StatusCode::UNAUTHORIZED)
