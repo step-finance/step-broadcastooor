@@ -6,7 +6,7 @@ use metrics_cloudwatch::metrics;
 use serde_json::json;
 use socketioxide::{
     adapter::Room,
-    extract::{Extension, SocketRef, State, TryData},
+    extract::{Extension, HttpExtension, SocketRef, State, TryData},
 };
 
 use crate::{messages::SubscribeRequest, state::BroadcastooorState, TopicFilterMap};
@@ -16,7 +16,7 @@ use super::connect::ConnectedUserInfo;
 pub fn handle_subscribe(
     s: SocketRef,
     all_filters: Extension<Arc<TopicFilterMap>>,
-    user: Extension<Arc<ConnectedUserInfo>>,
+    user: HttpExtension<ConnectedUserInfo>,
     state: State<BroadcastooorState>,
     msg: TryData<SubscribeRequest>,
 ) {

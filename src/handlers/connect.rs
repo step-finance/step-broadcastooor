@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use metrics_cloudwatch::metrics;
-use socketioxide::extract::{SocketRef, State};
+use socketioxide::extract::{Extension, HttpExtension, SocketRef, State};
 
 use crate::{
-    auth::claims,
+    auth::claims::{self, UserJWT},
     handlers::{subscribe::handle_subscribe, unsubscribe::handle_unsubscribe},
     state::BroadcastooorState,
     TopicFilterMap,
@@ -17,20 +17,13 @@ pub struct ConnectedUserInfo {
     pub claims: Option<claims::UserJWT>,
 }
 
-pub fn handle_connect(s: SocketRef, State(state): State<BroadcastooorState>) {
-    // Get the auth data from the request
-    let parts = s.req_parts();
-    let extensions = &s.extensions;
-    let Some(user) = extensions.get::<ConnectedUserInfo>() else {
-        log::error!("No user info found in extensions");
-        s.emit("serverError", "No user info found in extensions")
-            .ok();
-        s.disconnect().ok();
-        return;
-    };
-
+pub fn handle_connect(
+    s: SocketRef,
+    State(state): State<BroadcastooorState>,
+    HttpExtension(user): HttpExtension<ConnectedUserInfo>,
+) {
     //get the origin
-    let headers = &parts.headers;
+    let headers = &s.req_parts().headers;
     let origin = headers
         .get("Origin")
         .and_then(|v| v.to_str().ok().map(String::from));
@@ -53,12 +46,12 @@ pub fn handle_connect(s: SocketRef, State(state): State<BroadcastooorState>) {
     s.extensions.insert(Arc::new(filters));
 
     //create the handlers
-    let user_ref = user.clone();
+    let user_copy = user.clone();
     let state_ref = state.clone();
     let origin_ref = origin.clone();
     s.on_disconnect(move || {
         //send log on disconnect
-        state_ref.send_log(&user_ref, "disconnect", 200, origin_ref);
+        state_ref.send_log(&user_copy, "disconnect", 200, origin_ref);
 
         metrics::decrement_gauge!("CurrentConnections", 1.0);
         log::info!("Client disconnected");

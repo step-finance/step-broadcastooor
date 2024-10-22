@@ -249,7 +249,9 @@ async fn main() -> Result<()> {
     );
 
     //socket server setup
-    let (io_layer, io) = SocketIoBuilder::new();
+    let (io_layer, io) = SocketIoBuilder::new()
+        .with_state(state.clone())
+        .build_layer();
 
     //handle the connection event, which does auth & sets up event listeners
     io.ns(SCHEMA_SOCKETIO_PATH, handle_connect);
