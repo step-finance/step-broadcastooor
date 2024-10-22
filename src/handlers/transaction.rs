@@ -1,5 +1,6 @@
 use axum::{
     extract::{Query, State},
+    response::Response,
     Json,
 };
 use serde::{Deserialize, Serialize};
@@ -12,6 +13,7 @@ use crate::{state::BroadcastooorState, transaction_receiver::TransactionRequest}
 #[derive(Serialize, Deserialize)]
 pub struct TransactionRequestParams {
     pub filter: String,
+    pub num_txns: Option<u8>,
 }
 
 pub async fn transaction_handler(
@@ -19,16 +21,22 @@ pub async fn transaction_handler(
         global_txn_sender, ..
     }): State<BroadcastooorState>,
     Query(params): Query<TransactionRequestParams>,
-) -> Result<Json<Value>, axum::http::StatusCode> {
-    let (tx, rx) = oneshot::channel::<Vec<u8>>();
+) -> Result<&'static str, axum::http::StatusCode> {
+    let (tx, rx) = oneshot::channel::<Vec<Vec<u8>>>();
     let filters = params
         .filter
         .split(',')
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
+    let num_txns = params.num_txns.unwrap_or(1);
+    if num_txns > 25 {
+        return Err(axum::http::StatusCode::BAD_REQUEST);
+    }
     let req = TransactionRequest {
         response_sender: tx,
         filters,
+        num_txns,
+        transactions: Vec::with_capacity(num_txns as usize),
     };
 
     global_txn_sender.send(req).await.map_err(|e| {
@@ -41,8 +49,8 @@ pub async fn transaction_handler(
         axum::http::StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    Ok(Json(serde_json::from_slice(&response).map_err(|e| {
-        log::error!("Failed to parse transaction response: {}", e);
-        axum::http::StatusCode::INTERNAL_SERVER_ERROR
-    })?))
+    let mut buf = Vec::new();
+    let zip_obj = zip::ZipWriter::new(&mut buf);
+
+    Ok("TEST")
 }

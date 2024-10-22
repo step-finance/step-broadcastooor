@@ -14,8 +14,10 @@ use tokio::sync::{
 pub type TransactionRequestFilters = Vec<String>;
 
 pub struct TransactionRequest {
-    pub response_sender: oneshot::Sender<Vec<u8>>,
+    pub response_sender: oneshot::Sender<Vec<Vec<u8>>>,
     pub filters: TransactionRequestFilters,
+    pub num_txns: u8,
+    pub transactions: Vec<Vec<u8>>,
 }
 
 pub async fn run_txn_reader_thread(
@@ -98,18 +100,22 @@ pub async fn run_txn_reader_thread(
 
             let mut remaining_requests = Vec::new();
 
-            for req in txn_requests.into_iter() {
+            for mut req in txn_requests.into_iter() {
                 let filters = &req.filters;
                 let acct_exists = account_keys
                     .iter()
                     .any(|&key| filters.contains(&key.to_string()));
                 if acct_exists {
-                    // Valid match, send the data, and let the request drop out
-                    req.response_sender.send(data.clone()).unwrap();
-                } else {
-                    // No match, keep the request
-                    remaining_requests.push(req);
+                    req.transactions.push(data.clone());
+                    if req.transactions.len() >= req.num_txns as usize {
+                        // // Valid match, send the data, and let the request drop out
+                        req.response_sender.send(req.transactions).unwrap();
+                        continue;
+                    }
                 }
+
+                // Request has not fulfilled yet, keep it
+                remaining_requests.push(req);
             }
 
             // CRITICAL: Replace the txn_requests with the remaining requests

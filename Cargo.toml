@@ -63,6 +63,7 @@ indexer_rabbitmq = { package = "holaplex-indexer-rabbitmq", git = "https://githu
     "geyser",
 ] }
 tower = "0.5.1"
+zip = "1.1.4"
 
 [patch.crates-io]
 solana-cost-model = { git = 'https://github.com/step-finance/agave', rev = "514cbb6e001d31cdd4933e5d672457c95fbc1b27" }
