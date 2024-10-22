@@ -17,23 +17,30 @@
 //! Some dooots are also published as general topics as just `<dooot_name>`.
 //!
 //! For specific dooots, and their fields exposed as topics, see the [step_ingestooor_sdk::dooot] module.
-use std::{future::IntoFuture, sync::Arc};
+use std::{future::IntoFuture, sync::Arc, time::Duration};
 
 use anyhow::Result;
 use clap::Parser;
 use dashmap::DashMap;
 use data_writer::ApiLog;
 use evalexpr::Node;
-use handlers::connect::handle_connect;
+use handlers::{connect::handle_connect, transaction::transaction_handler};
 use hmac::{Hmac, Mac};
 
 use indexer_rabbitmq::lapin::{options::QueueDeclareOptions, types::FieldTable};
+use middleware::auth::auth_middleware;
 use socketioxide::SocketIoBuilder;
 use step_ingestooor_engine::rabbit_factory;
 
 #[doc(inline)]
 pub use messages::*;
-use tower_http::cors::{AllowOrigin, CorsLayer};
+use tokio::sync::mpsc;
+
+use tower_http::{
+    cors::{AllowOrigin, CorsLayer},
+    timeout::TimeoutLayer,
+};
+use transaction_receiver::TransactionRequest;
 
 #[doc(hidden)]
 mod auth;
@@ -44,9 +51,13 @@ mod handlers;
 #[doc(hidden)]
 mod messages;
 #[doc(hidden)]
+mod middleware;
+#[doc(hidden)]
 mod receiver;
 #[doc(hidden)]
 mod state;
+#[doc(hidden)]
+mod transaction_receiver;
 
 type TopicFilterMap = DashMap<String, DashMap<String, Option<Node>>>;
 
@@ -54,6 +65,8 @@ type TopicFilterMap = DashMap<String, DashMap<String, Option<Node>>>;
 pub const SCHEMA_SOCKETIO_PATH: &str = "/dooots";
 /// the path for a healthcheck endpoint
 pub const HEATHCHECK_PATH: &str = "/healthcheck";
+/// the path for a transaction endpoint
+pub const TXN_PATH: &str = "/txn";
 /// The address and port to bind the socket server to
 pub const BIND_ADDR_PORT: &str = "0.0.0.0:3000";
 
@@ -67,6 +80,10 @@ pub struct BroadcastooorArgs {
     /// The exchange to use
     #[clap(long, env)]
     pub rabbitmq_exchange: String,
+
+    /// The txn exchange to use
+    #[clap(long, env)]
+    pub rabbitmq_txn_exchange: String,
 
     /// The rabbitMQ prefetch count to use when reading from queues
     /// This loosely translates to # simultaneous messages being processed
@@ -92,6 +109,11 @@ pub struct BroadcastooorArgs {
     /// The database connection string for logging
     #[clap(long, env, required_if_eq("no_db_log", "false"))]
     pub database_con_string: Option<String>,
+}
+
+#[derive(Clone)]
+pub struct AppState {
+    pub global_txn_sender: Arc<mpsc::Sender<TransactionRequest>>,
 }
 
 #[doc(hidden)]
@@ -141,6 +163,7 @@ async fn main() -> Result<()> {
     //rabbit setup
     let connection = rabbit_factory::amqp_connect(args.rabbitmq_url, "broadcastooor").await?;
     let channel = connection.create_channel().await?;
+    let channel = Arc::new(channel);
     //create the temp queue with a max backlog of 10k.
     //if we can't keep up, theres a problem, but we don't want to just pile on rabbit
     let mut arguments = FieldTable::default();
@@ -154,13 +177,36 @@ async fn main() -> Result<()> {
                 exclusive: true,
                 ..Default::default()
             },
-            arguments,
+            arguments.clone(),
         )
         .await?;
     channel
         .queue_bind(
             queue.name().as_str(),
             &args.rabbitmq_exchange,
+            "#",
+            Default::default(),
+            Default::default(),
+        )
+        .await?;
+    // create another temp queue to listen to txn feed
+    // also capped at 10k
+    let txn_queue = channel
+        .queue_declare(
+            "",
+            QueueDeclareOptions {
+                auto_delete: true,
+                durable: false,
+                exclusive: true,
+                ..Default::default()
+            },
+            arguments,
+        )
+        .await?;
+    channel
+        .queue_bind(
+            txn_queue.name().as_str(),
+            &args.rabbitmq_txn_exchange,
             "#",
             Default::default(),
             Default::default(),
@@ -190,36 +236,52 @@ async fn main() -> Result<()> {
         //allow requests from origins matching
         .allow_origin(allow_origin_predicate);
 
+    let (txn_tx, txn_rx) = mpsc::channel::<TransactionRequest>(1024);
+
     //create state for the socket server to have
     let state = state::BroadcastooorState::new(
         whitelisted_origins,
         Hmac::new_from_slice(args.jwt_secret.as_bytes())?,
         args.no_auth,
         tx,
+        Arc::new(txn_tx),
     );
 
     //socket server setup
-    let (io_layer, io) = SocketIoBuilder::new()
-        .with_state(Arc::new(state))
-        .build_layer();
+    let (io_layer, io) = SocketIoBuilder::new().build_layer();
 
     //handle the connection event, which does auth & sets up event listeners
     io.ns(SCHEMA_SOCKETIO_PATH, handle_connect);
 
     let app = axum::Router::new()
+        //transaction grabbing
+        .route(TXN_PATH, axum::routing::get(transaction_handler))
+        .layer(TimeoutLayer::new(Duration::from_secs(30)))
         //healthcheck for aws
         .route(HEATHCHECK_PATH, axum::routing::get(|| async { "ok" }))
         //socketio
         .layer(io_layer)
         //cors
-        .layer(cors_layer);
+        .layer(cors_layer)
+        .with_state(state.clone())
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware,
+        ));
 
     //create a thread that uses rabbit to listen and publish dooots
-    let rabbit_thread = tokio::spawn(receiver::run_rabbit_thread(
-        channel,
+    let dooot_thread = tokio::spawn(receiver::run_rabbit_thread(
+        channel.clone(),
         queue,
         args.rabbitmq_prefetch.unwrap_or(64_u16),
         io,
+    ));
+
+    let txn_thread = tokio::spawn(transaction_receiver::run_txn_reader_thread(
+        channel,
+        txn_queue,
+        args.rabbitmq_prefetch.unwrap_or(64_u16),
+        txn_rx,
     ));
 
     //create the socket server
@@ -230,8 +292,11 @@ async fn main() -> Result<()> {
 
     //wait for either thread to fail
     tokio::select! {
-        e = rabbit_thread => {
+        e = dooot_thread => {
             log::error!("publisher thread exited {:?}", e);
+        }
+        e = txn_thread => {
+            log::error!("txn thread exited {:?}", e);
         }
         e = app_thread => {
             log::error!("app thread exited {:?}", e);
