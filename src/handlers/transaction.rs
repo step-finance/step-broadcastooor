@@ -50,19 +50,19 @@ pub async fn transaction_handler(
         axum::http::StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    if response.len() == 1 {
+    let resp_len = response.len();
+    let mut resp_iter = response.drain(..);
+
+    if resp_len == 1 {
         let mut header_map = HeaderMap::new();
         header_map.insert("Content-Type", "application/json".parse().unwrap());
-        let data = response
-            .drain(..)
-            .next()
-            .expect("UNREACHABLE - response.len() == 1");
+        let data = resp_iter.next().expect("UNREACHABLE - response.len() == 1");
         return Ok((header_map, data));
     }
 
     let mut buf = Cursor::new(Vec::new());
     let mut zip_obj = zip::ZipWriter::new(&mut buf);
-    for json_bytes in response.drain(..) {
+    for json_bytes in resp_iter {
         let json_val = serde_json::from_slice::<Value>(&json_bytes).map_err(|e| {
             log::error!("Failed to serialize transaction response: {}", e);
             axum::http::StatusCode::INTERNAL_SERVER_ERROR
