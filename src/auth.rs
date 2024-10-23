@@ -1,11 +1,3 @@
-use serde::Serialize;
-use serde_derive::Deserialize;
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct AuthData {
-    pub token: String,
-}
-
 pub mod claims {
 
     use std::collections::HashMap;

@@ -20,7 +20,6 @@
 use std::{future::IntoFuture, sync::Arc, time::Duration};
 
 use anyhow::Result;
-use axum::handler::Handler;
 use clap::Parser;
 use dashmap::DashMap;
 use data_writer::ApiLog;
@@ -48,13 +47,13 @@ mod auth;
 #[doc(hidden)]
 mod data_writer;
 #[doc(hidden)]
+mod dooot_receiver;
+#[doc(hidden)]
 mod handlers;
 #[doc(hidden)]
 mod messages;
 #[doc(hidden)]
 mod middleware;
-#[doc(hidden)]
-mod receiver;
 #[doc(hidden)]
 mod state;
 #[doc(hidden)]
@@ -260,8 +259,6 @@ async fn main() -> Result<()> {
         //transaction grabbing
         .route(TXN_PATH, axum::routing::get(transaction_handler))
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
-        //healthcheck for aws
-        .route(HEATHCHECK_PATH, axum::routing::get(|| async { "ok" }))
         //socketio
         .layer(io_layer)
         //cors
@@ -270,10 +267,12 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
-        ));
+        ))
+        //healthcheck for aws
+        .route(HEATHCHECK_PATH, axum::routing::get(|| async { "ok" }));
 
     //create a thread that uses rabbit to listen and publish dooots
-    let dooot_thread = tokio::spawn(receiver::run_rabbit_thread(
+    let dooot_thread = tokio::spawn(dooot_receiver::run_rabbit_thread(
         channel.clone(),
         queue,
         args.rabbitmq_prefetch.unwrap_or(64_u16),
