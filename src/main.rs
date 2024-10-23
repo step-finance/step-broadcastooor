@@ -111,11 +111,6 @@ pub struct BroadcastooorArgs {
     pub database_con_string: Option<String>,
 }
 
-#[derive(Clone)]
-pub struct AppState {
-    pub global_txn_sender: Arc<mpsc::Sender<TransactionRequest>>,
-}
-
 #[doc(hidden)]
 #[tokio::main]
 async fn main() -> Result<()> {

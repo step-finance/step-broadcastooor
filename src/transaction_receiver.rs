@@ -71,7 +71,6 @@ pub async fn run_txn_reader_thread(
         txn_requests.retain(|req| !req.response_sender.is_closed());
 
         if txn_requests.is_empty() {
-            // log::warn!("No active transaction requests, skipping");
             continue;
         }
 
@@ -94,7 +93,7 @@ pub async fn run_txn_reader_thread(
                 })
             else {
                 // No accounts, skip
-                // Could be SlotStats
+                // Probably SlotStats
                 continue;
             };
 
@@ -108,7 +107,7 @@ pub async fn run_txn_reader_thread(
                 if acct_exists {
                     req.transactions.push(data.clone());
                     if req.transactions.len() >= req.num_txns as usize {
-                        // // Valid match, send the data, and let the request drop out
+                        // Valid match, send the data, and let the request drop out
                         req.response_sender.send(req.transactions).unwrap();
                         continue;
                     }
@@ -118,7 +117,7 @@ pub async fn run_txn_reader_thread(
                 remaining_requests.push(req);
             }
 
-            // CRITICAL: Replace the txn_requests with the remaining requests
+            // CRITICAL: Replace txn_requests with the remaining requests
             txn_requests = remaining_requests;
         }
     }

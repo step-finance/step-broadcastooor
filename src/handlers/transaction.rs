@@ -45,7 +45,7 @@ pub async fn transaction_handler(
         axum::http::StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    let response = rx.await.map_err(|e| {
+    let mut response = rx.await.map_err(|e| {
         log::error!("Failed to receive transaction response: {}", e);
         axum::http::StatusCode::INTERNAL_SERVER_ERROR
     })?;
@@ -53,13 +53,17 @@ pub async fn transaction_handler(
     if response.len() == 1 {
         let mut header_map = HeaderMap::new();
         header_map.insert("Content-Type", "application/json".parse().unwrap());
-        return Ok((header_map, response[0].clone()));
+        let data = response
+            .drain(..)
+            .next()
+            .expect("UNREACHABLE - response.len() == 1");
+        return Ok((header_map, data));
     }
 
     let mut buf = Cursor::new(Vec::new());
     let mut zip_obj = zip::ZipWriter::new(&mut buf);
-    for json_bytes in response.iter() {
-        let json_val = serde_json::from_slice::<Value>(json_bytes).map_err(|e| {
+    for json_bytes in response.drain(..) {
+        let json_val = serde_json::from_slice::<Value>(&json_bytes).map_err(|e| {
             log::error!("Failed to serialize transaction response: {}", e);
             axum::http::StatusCode::INTERNAL_SERVER_ERROR
         })?;
@@ -83,7 +87,7 @@ pub async fn transaction_handler(
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR
             })?;
 
-        zip_obj.write(json_bytes).map_err(|e| {
+        zip_obj.write(&json_bytes).map_err(|e| {
             log::error!("Failed to write to zip: {}", e);
             axum::http::StatusCode::INTERNAL_SERVER_ERROR
         })?;
@@ -96,10 +100,10 @@ pub async fn transaction_handler(
 
     drop(zip_obj);
 
-    let v = buf.into_inner();
+    let zip_file_bytes = buf.into_inner();
 
     let mut header_map = HeaderMap::new();
     header_map.insert("Content-Type", "application/zip".parse().unwrap());
 
-    Ok((header_map, v))
+    Ok((header_map, zip_file_bytes))
 }
