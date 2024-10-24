@@ -7,11 +7,12 @@ orbs:
 executors:
   custom:
     machine:
-      image: default
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
     resource_class: xlarge
 
 jobs:
-  lint:
+  lint-test-build:
     docker:
       - image: rust:1.77
     resource_class: xlarge
@@ -19,10 +20,10 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - v2-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: "Install prereqs"
-          command: "apt-get update && apt-get install -y pkg-config libssl-dev git openssh-client libclang-dev"
+          command: "apt-get update && apt-get install -y pkg-config libssl-dev git openssh-client libclang-dev cmake"
       - run:
           name: "Install rustfmt"
           command: "rustup component add rustfmt && rustup component add clippy"
@@ -35,61 +36,18 @@ jobs:
       - run:
           name: "Check rust code"
           command: "cargo clippy --release -- -D warnings --warn clippy::all"
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/release/.fingerprint
-            - target/release/build
-            - target/release/deps
-          key: v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-  test:
-    docker:
-      - image: rust:1.77
-    resource_class: xlarge
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
       - run:
           name: "Unit tests"
           command: "cargo test --release"
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/release/.fingerprint
-            - target/release/build
-            - target/release/deps
-          key: v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - save_cache:
-          paths:
-            - sdk/src/types/
-          key: v1-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
-  build:
-    docker:
-      - image: rust:1.77
-    resource_class: xlarge
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:JNM7M2vDYYXuIiTFU3dtgRdBZrT6+uASFIwZ2DFL9z4"
       - run:
           name: "Build check"
           command: "cargo check --release"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
-            - target/release/.fingerprint
-            - target/release/build
-            - target/release/deps
-          key: v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - /usr/local/cargo/git
+            - target/release
+          key: v2-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
   publish-sdk:
     docker:
       - image: cimg/rust:1.77-node
@@ -140,32 +98,16 @@ workflows:
   run-pipeline:
     jobs:
       # Lint, test and build checks
-      - lint:
+      - lint-test-build:
           filters:
             branches:
               ignore:
                 - main
-      - test:
-          requires:
-            - lint
-          filters:
-            branches:
-              ignore:
-                - main
-      - build:
-          requires:
-            - lint
-            - test
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
 
       # Publish SDK to NPM
       - publish-sdk:
           requires:
-            - test
+            - lint-test-build
           filters:
             branches:
               only:

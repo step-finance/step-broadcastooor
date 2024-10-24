@@ -3,7 +3,7 @@ use std::sync::Arc;
 use log::{debug, error, info, warn};
 use metrics_cloudwatch::metrics;
 use serde_json::json;
-use socketioxide::extract::{Extension, SocketRef, State, TryData};
+use socketioxide::extract::{Extension, HttpExtension, SocketRef, State, TryData};
 
 use crate::{messages::UnsubscribeRequest, state::BroadcastooorState, TopicFilterMap};
 
@@ -12,8 +12,8 @@ use super::connect::ConnectedUserInfo;
 pub fn handle_unsubscribe(
     s: SocketRef,
     all_filters: Extension<Arc<TopicFilterMap>>,
-    user: Extension<Arc<ConnectedUserInfo>>,
-    state: State<Arc<BroadcastooorState>>,
+    user: HttpExtension<ConnectedUserInfo>,
+    state: State<BroadcastooorState>,
     msg: TryData<UnsubscribeRequest>,
 ) {
     let msg: UnsubscribeRequest = match msg {
