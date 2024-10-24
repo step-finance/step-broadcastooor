@@ -48,6 +48,10 @@ jobs:
             - /usr/local/cargo/git
             - target/release
           key: v2-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - save_cache:
+          paths:
+            - sdk/src/types/
+          key: v2-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
   publish-sdk:
     docker:
       - image: cimg/rust:1.77-node
@@ -60,7 +64,7 @@ jobs:
             mkdir /root/project
       - restore_cache:
           keys:
-            - v1-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - v2-ts-types-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: "Root folder cache fix move"
           command: |
