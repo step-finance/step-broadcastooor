@@ -16,7 +16,7 @@ use crate::{messages::DoootMessage, TopicFilterMap, SCHEMA_SOCKETIO_PATH};
 
 pub const RECV_SCHEMA_EVENT_NAME: &str = "receivedDooot";
 
-pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io: SocketIo) {
+pub async fn run_rabbit_thread(channel: Arc<Channel>, queue: Queue, prefetch: u16, io: SocketIo) {
     //set the prefetch on the channel
     channel
         .basic_qos(prefetch, BasicQosOptions::default())
@@ -27,7 +27,7 @@ pub async fn run_rabbit_thread(channel: Channel, queue: Queue, prefetch: u16, io
     let mut consumer = channel
         .basic_consume(
             queue.name().as_str(),
-            "broadcastooor",
+            "broadcastooor-dooot",
             BasicConsumeOptions {
                 no_ack: true,
                 exclusive: true,

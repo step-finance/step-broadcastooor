@@ -1,11 +1,3 @@
-use serde::Serialize;
-use serde_derive::Deserialize;
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct AuthData {
-    pub token: String,
-}
-
 pub mod claims {
 
     use std::collections::HashMap;
@@ -13,9 +5,12 @@ pub mod claims {
     use serde_derive::Deserialize;
     use serde_derive::Serialize;
 
+    /// The claims that are stored in the JWT
+    /// Decoding the user's JWT token (on [jwt.io](https://jwt.io/), for example)
+    /// will give you this struct
     #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
     #[serde(rename_all = "camelCase")]
-    pub struct Root {
+    pub struct UserJWT {
         pub cluster: String,
         pub api_key: Option<String>,
         pub public_key: Option<String>,
@@ -23,7 +18,8 @@ pub mod claims {
         pub iat: i64,
         pub exp: i64,
     }
-    impl Root {
+
+    impl UserJWT {
         #[inline]
         pub fn has_role(&self, role: &String, regarding: Option<&str>) -> bool {
             self.global_roles_and_products().roles.contains(role)
