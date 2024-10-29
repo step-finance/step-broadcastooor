@@ -36,7 +36,7 @@ pub async fn auth_middleware(
     let origin = headers.get("Origin").and_then(|v| v.to_str().ok());
     if let Some(origin) = origin {
         user.origin = Some(origin.to_owned());
-        if whitelisted_origins.contains(&origin.to_string()) {
+        if whitelisted_origins.iter().any(|wl| wl.contains(origin)) {
             req.extensions_mut().insert(user);
             return Ok(next.run(req).await);
         }
