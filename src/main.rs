@@ -162,7 +162,7 @@ async fn main() -> Result<()> {
     //create the temp queue with a max backlog of 10k.
     //if we can't keep up, theres a problem, but we don't want to just pile on rabbit
     let mut arguments = FieldTable::default();
-    arguments.insert("max-length".into(), 10_000.into());
+    arguments.insert("x-max-length".into(), 10_000.into());
     let queue = channel
         .queue_declare(
             "",
