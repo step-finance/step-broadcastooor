@@ -10,7 +10,7 @@ export type SocketIOClient = Socket<DataDoootListenEvents, DataDoootEmitEvents>;
 export class StepDataDoootBroadcastooor {
   private socket: SocketIOClient;
   constructor(url: string, token: string | undefined = undefined) {
-    this.socket = io(url + "/dooots", {auth:{token}});
+    this.socket = io(url + "/dooots", { auth: { token } });
   }
 
   onConnect(listener: () => void | Promise<void>): this {
@@ -25,9 +25,14 @@ export class StepDataDoootBroadcastooor {
 
   subscribe(topic: string, filterId?: string, filterExpression?: string): this {
     if (!!filterId !== !!filterExpression) {
-      throw new Error("filterId and filterExpression must both be set or both be undefined");
+      throw new Error(
+        "filterId and filterExpression must both be set or both be undefined",
+      );
     } else if (filterId && filterExpression) {
-      this.socket.emit("subscribe", { topic, "filter": { "id": filterId, "expression": filterExpression } });
+      this.socket.emit("subscribe", {
+        topic,
+        filter: { id: filterId, expression: filterExpression },
+      });
     } else {
       this.socket.emit("subscribe", { topic });
     }
@@ -39,7 +44,9 @@ export class StepDataDoootBroadcastooor {
     return this;
   }
 
-  onReceivedDooot(listener: (message: DoootMessage) => void | Promise<void>): this {
+  onReceivedDooot(
+    listener: (message: DoootMessage) => void | Promise<void>,
+  ): this {
     this.socket.on("receivedDooot", listener);
     return this;
   }
