@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use dashmap::DashMap;
 use evalexpr::Node;
-use futures_util::StreamExt;
+use futures_util::{StreamExt, TryFutureExt};
 use indexer_rabbitmq::lapin::{
     options::{BasicConsumeOptions, BasicQosOptions},
     Channel, Queue,
@@ -59,6 +59,7 @@ fn handle_incoming_dooots(data: Vec<u8>, socket_io: SocketIo) {
     let Ok(dooots) = dooot_strings
         .map(serde_json::from_slice)
         .collect::<Result<Vec<Dooot>, _>>()
+        .inspect_err(|e| log::error!("{e}"))
     else {
         error!("failed to parse messages, wrong dooot version is likely!! we're losing messages until this is fixed!");
         return;
