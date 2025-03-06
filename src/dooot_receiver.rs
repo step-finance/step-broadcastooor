@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use dashmap::DashMap;
 use evalexpr::Node;
-use futures_util::StreamExt;
+use futures_util::{StreamExt, TryFutureExt};
 use indexer_rabbitmq::lapin::{
     options::{BasicConsumeOptions, BasicQosOptions},
     Channel, Queue,
@@ -31,7 +31,6 @@ pub async fn run_rabbit_thread(channel: Arc<Channel>, queue: Queue, prefetch: u1
             BasicConsumeOptions {
                 no_ack: true,
                 exclusive: true,
-                nowait: true,
                 ..Default::default()
             },
             Default::default(),
@@ -56,12 +55,15 @@ fn handle_incoming_dooots(data: Vec<u8>, socket_io: SocketIo) {
     trace!("got message: {}", String::from_utf8(data.to_vec()).unwrap());
 
     let dooot_strings = data.split(|a| *a == b'\n');
-    let Ok(dooots) = dooot_strings
+    let dooots = match dooot_strings
         .map(serde_json::from_slice)
         .collect::<Result<Vec<Dooot>, _>>()
-    else {
-        error!("failed to parse messages, wrong dooot version is likely!! we're losing messages until this is fixed!");
-        return;
+    {
+        Ok(dooots) => dooots,
+        Err(e) => {
+            error!("failed to parse messages, wrong dooot version is likely!! we're losing messages until this is fixed! {e}");
+            return;
+        }
     };
 
     for dooot in dooots {
