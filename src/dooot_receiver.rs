@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use dashmap::DashMap;
 use evalexpr::Node;
-use futures_util::{StreamExt, TryFutureExt};
+use futures_util::StreamExt;
 use indexer_rabbitmq::lapin::{
     options::{BasicConsumeOptions, BasicQosOptions},
     Channel, Queue,
