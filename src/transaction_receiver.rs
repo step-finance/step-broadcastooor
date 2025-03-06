@@ -42,7 +42,6 @@ pub async fn run_txn_reader_thread(
             BasicConsumeOptions {
                 no_ack: true,
                 exclusive: true,
-                nowait: true,
                 ..Default::default()
             },
             Default::default(),

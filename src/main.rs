@@ -163,7 +163,7 @@ async fn main() -> Result<()> {
     //if we can't keep up, theres a problem, but we don't want to just pile on rabbit
     let mut arguments = FieldTable::default();
     arguments.insert("x-max-length".into(), 10_000.into());
-    let queue = channel
+    let dooot_queue = channel
         .queue_declare(
             "",
             QueueDeclareOptions {
@@ -177,7 +177,7 @@ async fn main() -> Result<()> {
         .await?;
     channel
         .queue_bind(
-            queue.name().as_str(),
+            dooot_queue.name().as_str(),
             &args.rabbitmq_dooot_exchange,
             "#",
             Default::default(),
@@ -269,7 +269,7 @@ async fn main() -> Result<()> {
     //create a thread that uses rabbit to listen and publish dooots
     let dooot_thread = tokio::spawn(dooot_receiver::run_rabbit_thread(
         channel.clone(),
-        queue,
+        dooot_queue,
         args.rabbitmq_prefetch.unwrap_or(64_u16),
         io,
     ));

@@ -31,7 +31,6 @@ pub async fn run_rabbit_thread(channel: Arc<Channel>, queue: Queue, prefetch: u1
             BasicConsumeOptions {
                 no_ack: true,
                 exclusive: true,
-                nowait: true,
                 ..Default::default()
             },
             Default::default(),
