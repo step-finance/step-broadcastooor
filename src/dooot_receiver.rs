@@ -55,13 +55,15 @@ fn handle_incoming_dooots(data: Vec<u8>, socket_io: SocketIo) {
     trace!("got message: {}", String::from_utf8(data.to_vec()).unwrap());
 
     let dooot_strings = data.split(|a| *a == b'\n');
-    let Ok(dooots) = dooot_strings
+    let dooots = match dooot_strings
         .map(serde_json::from_slice)
         .collect::<Result<Vec<Dooot>, _>>()
-        .inspect_err(|e| log::error!("{e}"))
-    else {
-        error!("failed to parse messages, wrong dooot version is likely!! we're losing messages until this is fixed!");
-        return;
+    {
+        Ok(dooots) => dooots,
+        Err(e) => {
+            error!("failed to parse messages, wrong dooot version is likely!! we're losing messages until this is fixed! {e}");
+            return;
+        }
     };
 
     for dooot in dooots {
