@@ -51,9 +51,9 @@ solana-transaction-status = "=2.0.13"
 solana-account-decoder = "=2.0.13"
 solana-ledger = "=2.0.13"
 
-step-common-rust = { git = "ssh://git@github.com/step-finance/step-ingestooor", rev = "35b219e7542abaf5a3f8613c6f659294cb674c3a" }
-step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "35b219e7542abaf5a3f8613c6f659294cb674c3a" }
-step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor", rev = "35b219e7542abaf5a3f8613c6f659294cb674c3a" }
+step-common-rust = { git = "ssh://git@github.com/step-finance/step-ingestooor", rev = "3c365b5a7155ec280b88416c67e28fa8ca81f875" }
+step-ingestooor-engine = { git = "ssh://git@github.com/step-finance/step-ingestooor.git", rev = "3c365b5a7155ec280b88416c67e28fa8ca81f875" }
+step-ingestooor-sdk = { git = "ssh://git@github.com/step-finance/step-ingestooor", rev = "3c365b5a7155ec280b88416c67e28fa8ca81f875" }
 
 # step-common-rust = { path = "../step-common-rust/crates/step-common-rust", version = "0.3.0" }
 # step-ingestooor-engine = { path = "../step-ingestooor/crates/engine" }
