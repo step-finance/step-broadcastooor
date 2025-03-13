@@ -225,7 +225,7 @@ async fn main() -> Result<()> {
     );
 
     let whitelisted_origins_clone = whitelisted_origins.clone();
-    let allow_origin_predicate = if (args.no_cors) {
+    let allow_origin_predicate = if args.no_cors {
         AllowOrigin::predicate(move |_, _| true)
     } else {
         AllowOrigin::predicate(move |origin, _| {
