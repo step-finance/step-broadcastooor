@@ -94,11 +94,15 @@ pub struct BroadcastooorArgs {
     #[clap(long, env)]
     pub whitelisted_origins: String,
 
+    /// Disable CORS
+    #[clap(long, env, default_value = "false", parse(try_from_str))]
+    pub no_cors: bool,
+
     /// The secret to use for JWTs
     #[clap(long, env)]
     pub jwt_secret: String,
 
-    /// The secret to use for JWTs
+    /// Disable auth
     #[clap(long, env, default_value = "false", parse(try_from_str))]
     pub no_auth: bool,
 
@@ -221,10 +225,14 @@ async fn main() -> Result<()> {
     );
 
     let whitelisted_origins_clone = whitelisted_origins.clone();
-    let allow_origin_predicate = AllowOrigin::predicate(move |origin, _| {
-        let origin = origin.to_str().unwrap();
-        whitelisted_origins_clone.iter().any(|a| origin.contains(a))
-    });
+    let allow_origin_predicate = if (args.no_cors) {
+        AllowOrigin::predicate(move |_, _| true)
+    } else {
+        AllowOrigin::predicate(move |origin, _| {
+            let origin = origin.to_str().unwrap();
+            whitelisted_origins_clone.iter().any(|a| origin.contains(a))
+        })
+    };
 
     //build the tower layers
     let cors_layer = CorsLayer::new()
